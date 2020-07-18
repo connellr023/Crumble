@@ -1,3 +1,15 @@
+* {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    appearance: none;
+    outline: none;
+}
+
+body {
+    background-color: #121212;
+}
+
 canvas {
     margin: auto;
     margin-left: -8px;
@@ -9,8 +21,79 @@ canvas {
     image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
     image-rendering: pixelated;                 /* Awesome future-browsers       */
     -ms-interpolation-mode: nearest-neighbor;
+    display: none;
+}
+
+input.standard-input {
+    background-color: #131313;
+    border: none;
+    color: lightgrey;
+    font-family: "Crumble";
+    font-size: 30px;
+    margin: auto;
+    padding: 6px;
+    transition: 0.4s;
+}
+
+input.standard-input:focus {
+    background-color: #0e0e0e;
+    transition: 0.4s;
+}
+
+button.standard-btn {
+    color: rgb(176, 53, 53);
+    cursor: pointer;
+    border: none;
+    background-color: #131313;
+    font-family: "Crumble";
+    font-size: 30px;
+    text-align: center;
+    transition: 0.4s;
+}
+
+button.standard-btn:hover {
+    color: rgb(233, 45, 45);
+    background-color: #0e0e0e;
+    transition: 0.4s;
+}
+
+div.content-wrapper {
+    background-color: #1c1c1c;
+    text-align: center;
+    padding: 10px;
+    height: fit-content;
+    width: fit-content;
+
+    position: absolute;
+    top: calc(50% - 95px);
+    left: calc(50% - 166px);
+}
+
+div.title-txt {
+    color: white;
+    font-family: "Crumble";
+    font-size: 60px;
+    margin-top: -10px;
+    margin-bottom: 8px;
+}
+
+button#name-conf {
+    margin-top: 13px;
+    padding-bottom: 4px;
+    padding-top: 4px;
+    width: 312px;
+}
+
+input#name-input {
+    text-align: center;
+    width: 300px;
 }
 
 ::-webkit-scrollbar {
     display: none;
+}
+
+@font-face {
+    font-family: "Crumble";
+    src: url("./crumble.ttf");
 }
