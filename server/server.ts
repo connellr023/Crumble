@@ -23,7 +23,7 @@ export enum SocketEvents {
     DISCONNECT = "disconnect",
     PLAYER_LEAVE = "leave",
     REGISTER = "register",
-    GAME_DATA = "gamedata"
+    START_GAME = "startgame"
 }
 
 /**

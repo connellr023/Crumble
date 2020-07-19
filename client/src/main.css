@@ -41,7 +41,7 @@ input.standard-input:focus {
 }
 
 button.standard-btn {
-    color: rgb(176, 53, 53);
+    color: rgb(53, 176, 98);
     cursor: pointer;
     border: none;
     background-color: #131313;
@@ -49,10 +49,12 @@ button.standard-btn {
     font-size: 30px;
     text-align: center;
     transition: 0.4s;
+    padding-bottom: 4px;
+    padding-top: 4px;
 }
 
 button.standard-btn:hover {
-    color: rgb(233, 45, 45);
+    color: rgb(45, 233, 167);
     background-color: #0e0e0e;
     transition: 0.4s;
 }
@@ -77,10 +79,23 @@ div.title-txt {
     margin-bottom: 8px;
 }
 
-button#name-conf {
+div.subtitle-txt {
+    color: rgb(140, 140, 140);
+    font-family: "Crumble";
+    font-size: 30px;
+}
+
+div#client-msg {
+    color: rgb(255, 36, 51);
+    text-align: center;
+    font-family: "Crumble";
+    font-size: 30px;
+    margin-bottom: 8px;
+    width: 300px;
+}
+
+button#name-conf, button#cancel-queue {
     margin-top: 13px;
-    padding-bottom: 4px;
-    padding-top: 4px;
     width: 312px;
 }
 

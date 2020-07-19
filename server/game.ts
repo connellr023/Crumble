@@ -120,6 +120,8 @@ export class Game {
             socket.on(SocketEvents.REGISTER, (name: string) => {
                 this.addPlayer(name, socket.id);
                 console.log(`[+] Added Player "${name}" to "${this.namespace.name}"`);
+                
+                this.namespace.emit(SocketEvents.START_GAME, (this.players.length === maxPlayers));
             });
 
             // Socket Disconnect Event
