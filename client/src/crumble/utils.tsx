@@ -46,6 +46,34 @@ export interface IGameData {
 }
 
 /**
+ * Enumeration of Events that Will Take Place on the Socket Client
+ */
+export enum SocketEvents {
+    CONNECTED = "connect",
+    REGISTER = "register",
+    PLAYER_LEAVE = "leave",
+    START_GAME = "startgame",
+    RECV_ID = "id"
+}
+
+/**
+ * Enumeration of Events that Will Take Place in Game
+ */
+export enum GameEvents {
+    PLAYER_MOVE = "playermove"
+}
+
+/**
+ * Enumeration of Possible Directions a Player can Move
+ */
+export enum Directions {
+    UP = "up",
+    DOWN = "down",
+    LEFT = "left",
+    RIGHT = "right"
+}
+
+/**
  * Generates a Random Integer in a Range
  * @param min Minimum Value of Output
  * @param max Maximum Value of Output

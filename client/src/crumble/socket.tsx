@@ -5,7 +5,7 @@
 
 import { setEnteredQueue } from "./interface";
 import { startGame, stopGame } from "./game";
-import { IGameData, IPlayerData } from "./utils";
+import { IGameData, IPlayerData, SocketEvents, GameEvents, Directions } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -13,34 +13,6 @@ import io from "socket.io-client";
 export let clientSocketId: string;
 export let connectedPlayers: any;
 export let inputUpdateInterval: NodeJS.Timeout;
-
-/**
- * Enumeration of Events that Will Take Place on the Socket Client
- */
-export enum SocketEvents {
-    CONNECTED = "connect",
-    REGISTER = "register",
-    PLAYER_LEAVE = "leave",
-    START_GAME = "startgame",
-    RECV_ID = "id"
-}
-
-/**
- * Enumeration of Events that Will Take Place in Game
- */
-enum GameEvents {
-    PLAYER_MOVE = "playermove"
-}
-
-/**
- * Enumeration of Possible Directions a Player can Move
- */
-enum Directions {
-    UP = "up",
-    DOWN = "down",
-    LEFT = "left",
-    RIGHT = "right"
-}
 
 /**
  * Registers the Crumble Client with the Socket Server

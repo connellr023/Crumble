@@ -114,9 +114,7 @@ export class Game {
                     });
                 }
 
-                /**
-                 * Send Socket ID to the Client
-                 */
+                // Send Socket ID to the Client
                 socket.emit(SocketEvents.SEND_ID, socket.id);
             });
 
