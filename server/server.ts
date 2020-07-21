@@ -3,59 +3,25 @@
  * @author Connell Reffo
  */
 
-import { Game, Player, Vec2, activeGames, maxPlayers } from "./game";
+import { Game, activeGames } from "./game";
+import { PORT, MAX_ACTIVE_GAMES, MAX_PLAYERS } from "./utils";
 
 import * as cors from "cors";
 import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as socketIo from "socket.io";
 
-const app = require("express")();
-export const router = express.Router({ caseSensitive: true });
+const APP = require("express")();
+export const ROUTER = express.Router({ caseSensitive: true });
 
-app.use(bodyParser.urlencoded({ extended: true }));
-
-/**
- * Enumeration of Events that Will Take Place on a Socket Server
- */
-export enum SocketEvents {
-    CONNECTION = "connection",
-    DISCONNECT = "disconnect",
-    PLAYER_LEAVE = "leave",
-    REGISTER = "register",
-    START_GAME = "startgame"
-}
-
-/**
- * Represents Lobby Data to be Sent to the Client
- */
-interface IGameStart {
-    start: boolean;
-    lobby: string;
-}
-
-/**
- * The Maximum Amount of Games that can be Concurrently Running
- */
-const maxActiveGames = 1;
-
-/**
- * The TPS the Server Should have when Running in Good Conditions
- */
-const optimalTicksPerSecond = 20;
-
-/**
- * Port that the Main Crumble Server will Run on
- */
-const port = 8000;
-
-app.use(router);
-app.use(cors());
+APP.use(bodyParser.urlencoded({ extended: true }));
+APP.use(ROUTER);
+APP.use(cors());
 
 /**
  * Server Variable
  */
-export const server = app.listen(port, () => {
+export const server = APP.listen(PORT, () => {
     console.log("Started Main Crumble Server");
 });
 
@@ -72,13 +38,13 @@ function getAvailableLobby(): string {
     function openGame(): string {
 
         // Check if the Limit of Concurrently Running Games is Reached
-        if (activeGames.length < maxActiveGames) {
+        if (activeGames.length < MAX_ACTIVE_GAMES) {
 
             // Create a New Match
-            const gameInstance = new Game();
-            gameInstance.registerActiveGame();
+            const GAME_INSTANCE = new Game();
+            GAME_INSTANCE.registerActiveGame();
 
-            return gameInstance.lobbyId;
+            return GAME_INSTANCE.lobbyId;
         }
         else {
             console.log("[!] Maximum Amount of Active Games Reached");
@@ -93,7 +59,7 @@ function getAvailableLobby(): string {
         for (let activeGame in activeGames) {
             let game = activeGames[activeGame];
 
-            if (game.players.length < maxPlayers) {
+            if (Object.keys(game.players).length < MAX_PLAYERS) {
                 return game.lobbyId;
             }
         }
@@ -111,10 +77,10 @@ function getAvailableLobby(): string {
 /**
  * Hooks a Client up with a Lobby ID
  */
-router.post("/api/find-lobby", (req, res) => {
-    const lobbyId = getAvailableLobby();
+ROUTER.post("/api/find-lobby", (req, res) => {
+    const LOBBY_ID = getAvailableLobby();
 
     res.send({
-        lobby: lobbyId
+        lobby: LOBBY_ID
     });
 });

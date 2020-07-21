@@ -3,52 +3,20 @@
  * @author Connell Reffo
  */
 
-import { io, SocketEvents } from "./server";
+import { io } from "./server";
+import { Vec2, randomInt, GameEvents, SocketEvents, Directions, PLAYER_SPEED, MAX_PLAYERS } from "./utils";
 
 import * as socketIo from "socket.io";
-
-/**
- * The Maximum Amount of Players that can be in a Single Game
- */
-export const maxPlayers = 2;
 
 /**
  * Tracks all active online games
  */
 export let activeGames: Array<Game> = [];
 
-/**
- * Generates a Random Integer in a Range
- * @param min Minimum Value of Output
- * @param max Maximum Value of Output
- */
-function randomInt(min: number, max: number): number {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export class Vec2 {
-    public x: number;
-    public y: number;
-
-    public static zero = new Vec2(0, 0);
-
-    /**
-     * @param x X Position
-     * @param y Y Position
-     */
-    constructor (x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
-
 export class Player {
     public name: string;
     public position: Vec2;
     public direction: number;
-    public socketId: string;
 
     /**
      * @param name Name of Player
@@ -56,20 +24,20 @@ export class Player {
      * @param direction Direction Player is Facing
      * @param socketId The Socket ID of the Connected Player
      */
-    constructor (name: string, position: Vec2, direction: number, socketId: string) {
+    constructor (name: string, position: Vec2, direction: number) {
         this.name = name;
         this.position = position;
         this.direction = direction;
-        this.socketId = socketId;
     }
 }
 
 export class Game {
     public lobbyId: string;
-    public players: Array<Player> = [];
+    public players: object = {};
     public namespace: socketIo.Namespace;
 
     constructor() {
+        
         // Generate Lobby ID
         this.lobbyId = activeGames.length + randomInt(0, 100).toString();
     }
@@ -92,8 +60,8 @@ export class Game {
      * @param socketId ID of Active Socket Connection
      */
     public addPlayer(name: string, socketId: string) {
-        const player = new Player(name, Vec2.zero, 0, socketId);
-        this.players.push(player);
+        const PLAYER = new Player(name, Vec2.random(0, 160), 0);
+        this.players[socketId] = PLAYER;
     }
 
     /**
@@ -101,11 +69,7 @@ export class Game {
      * @param socketId Socket ID of Player to Remove
      */
     public removePlayer(socketId: string) {
-        this.players.forEach((player, index) => {
-            if (player.socketId === socketId) {
-                delete this.players[index];
-            }
-        });
+        delete this.players[socketId];
     }
 
     /**
@@ -120,8 +84,40 @@ export class Game {
             socket.on(SocketEvents.REGISTER, (name: string) => {
                 this.addPlayer(name, socket.id);
                 console.log(`[+] Added Player "${name}" to "${this.namespace.name}"`);
-                
-                this.namespace.emit(SocketEvents.START_GAME, (this.players.length === maxPlayers));
+
+                const START_GAME = (Object.keys(this.players).length === MAX_PLAYERS);
+
+                if (START_GAME) {
+                    let playersObject = {};
+
+                    for (let socketId in this.players) {
+                        const PLAYER = this.players[socketId] as Player;
+
+                        playersObject[socketId] = {
+                            name: PLAYER.name,
+                            pos: {
+                                x: PLAYER.position.x,
+                                y: PLAYER.position.y
+                            },
+                            direction: PLAYER.direction
+                        };
+                    }
+
+                    this.namespace.emit(SocketEvents.START_GAME, {
+                        start: true,
+                        players: playersObject
+                    });
+                }
+                else {
+                    this.namespace.emit(SocketEvents.START_GAME, {
+                        start: false
+                    });
+                }
+
+                /**
+                 * Send Socket ID to the Client
+                 */
+                socket.emit(SocketEvents.SEND_ID, socket.id);
             });
 
             // Socket Disconnect Event
@@ -134,6 +130,36 @@ export class Game {
                 });
 
                 console.log(`[x] Closed Game "${this.lobbyId}" Due to Socket ID "${socket.id}"`);
+            });
+
+            // Game Events
+
+            // Player Movement Event
+            socket.on(GameEvents.PLAYER_MOVE, (direction: Directions) => {
+                switch (direction) {
+                    case Directions.UP:
+                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y - PLAYER_SPEED);
+                        break;
+                    case Directions.DOWN:
+                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y + PLAYER_SPEED);
+                        break;
+                    case Directions.LEFT:
+                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x - PLAYER_SPEED, this.players[socket.id].position.y);
+                        break;
+                    case Directions.RIGHT:
+                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x + PLAYER_SPEED, this.players[socket.id].position.y);
+                        break;
+                }
+
+                this.namespace.emit(GameEvents.PLAYER_MOVE, {
+                    socketId: socket.id,
+                    direction: 0,
+                    name: this.players[socket.id].name,
+                    pos: {
+                        x: this.players[socket.id].position.x,
+                        y: this.players[socket.id].position.y
+                    }
+                });
             });
         });
     }

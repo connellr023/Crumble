@@ -4,9 +4,15 @@
  */
 
 import { setEnteredQueue } from "./interface";
+import { startGame, stopGame } from "./game";
+import { IGameData, IPlayerData } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
+
+export let clientSocketId: string;
+export let connectedPlayers: any;
+export let inputUpdateInterval: NodeJS.Timeout;
 
 /**
  * Enumeration of Events that Will Take Place on the Socket Client
@@ -15,7 +21,25 @@ export enum SocketEvents {
     CONNECTED = "connect",
     REGISTER = "register",
     PLAYER_LEAVE = "leave",
-    START_GAME = "startgame"
+    START_GAME = "startgame",
+    RECV_ID = "id"
+}
+
+/**
+ * Enumeration of Events that Will Take Place in Game
+ */
+enum GameEvents {
+    PLAYER_MOVE = "playermove"
+}
+
+/**
+ * Enumeration of Possible Directions a Player can Move
+ */
+enum Directions {
+    UP = "up",
+    DOWN = "down",
+    LEFT = "left",
+    RIGHT = "right"
 }
 
 /**
@@ -33,13 +57,21 @@ export function handleClientSocket(name: string, lobbyId: string) {
         socket.emit(SocketEvents.REGISTER, name);
     });
 
+    // Recieve Socket ID Event
+    socket.on(SocketEvents.RECV_ID, (socketId: string) => {
+        clientSocketId = socketId;
+    });
+
     // Register Event
-    socket.on(SocketEvents.START_GAME, (start: boolean) => {
-        if (start) {
+    socket.on(SocketEvents.START_GAME, (gameData: IGameData) => {
+        if (gameData.start) {
             $("#name-choose-menu").css("display", "none");
             $("#match-wait-menu").css("display", "none");
 
+            startGame();
             $("canvas").css("display", "block");
+
+            connectedPlayers = gameData.players as object;
         }
         else {
             $("#name-choose-menu").css("display", "none");
@@ -54,8 +86,58 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
         $("#name-choose-menu").css("display", "block");
         $("#match-wait-menu").css("display", "none");
+        $("canvas").css("display", "none");
         $("#name-input").val("");
 
+        stopGame();
         setEnteredQueue(false);
     });
+
+    // Game Events
+
+    // Player Move Event
+    socket.on(GameEvents.PLAYER_MOVE, (player: IPlayerData) => {
+        const DATA: IPlayerData = {
+            direction: player.direction,
+            name: player.name,
+            pos: {
+                x: player.pos.x,
+                y: player.pos.y
+            }
+        }
+
+        connectedPlayers[player.socketId as string] = DATA;
+    });
+
+    // Handle Keypresses
+    const SEND_INPUT_MS = 85;
+
+    let keysPressed: any = {};
+
+    document.addEventListener("keydown", (key) => {
+        keysPressed[key.key] = true;
+    });
+
+    document.addEventListener("keyup", (key) => {
+        keysPressed[key.key] = false;
+    })
+
+    inputUpdateInterval = setInterval(() => {
+
+        // Up and Down Movement
+        if (keysPressed["w"]) {
+            socket.emit(GameEvents.PLAYER_MOVE, Directions.UP);
+        }
+        else if (keysPressed["s"]) {
+            socket.emit(GameEvents.PLAYER_MOVE, Directions.DOWN);
+        }
+
+        // Left and Right Movement
+        if (keysPressed["a"]) {
+            socket.emit(GameEvents.PLAYER_MOVE, Directions.LEFT);
+        }
+        else if (keysPressed["d"]) {
+            socket.emit(GameEvents.PLAYER_MOVE, Directions.RIGHT);
+        }
+    }, SEND_INPUT_MS);
 }

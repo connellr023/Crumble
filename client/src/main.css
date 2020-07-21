@@ -8,12 +8,11 @@
 
 body {
     background-color: #121212;
+    margin: auto;
 }
 
 canvas {
     margin: auto;
-    margin-left: -8px;
-    margin-top: -8px;
     overflow: auto;
     image-rendering: optimizeSpeed;             /* Older versions of FF          */
     image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
@@ -110,5 +109,5 @@ input#name-input {
 
 @font-face {
     font-family: "Crumble";
-    src: url("./crumble.ttf");
+    src: url("./assets/crumble.ttf");
 }
