@@ -51,7 +51,7 @@ export class CrumbleGame extends Phaser.Scene {
         nametag.setFontSize(25);
         nametag.setResolution(3);
         nametag.setFontFamily("Crumble");
-        
+
         if (clientSocketId === socketId) {
             nametag.setColor("#7cff70");
         }

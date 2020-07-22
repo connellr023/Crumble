@@ -82,7 +82,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
     });
 
     // Handle Keypresses
-    const SEND_INPUT_MS = 85;
+    const SEND_INPUT_MS = 100;
 
     let keysPressed: any = {};
 

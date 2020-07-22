@@ -4,7 +4,7 @@
  */
 
 import { io } from "./server";
-import { Vec2, randomInt, GameEvents, SocketEvents, Directions, PLAYER_SPEED, MAX_PLAYERS } from "./utils";
+import { Vec2, randomInt, isColliding, GameEvents, SocketEvents, Directions, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -14,7 +14,7 @@ import * as socketIo from "socket.io";
 export let activeGames: Array<Game> = [];
 
 export class Player {
-    public name: string;
+    public name: string; 
     public position: Vec2;
     public direction: number;
 
@@ -134,30 +134,81 @@ export class Game {
 
             // Player Movement Event
             socket.on(GameEvents.PLAYER_MOVE, (direction: Directions) => {
-                switch (direction) {
-                    case Directions.UP:
-                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y - PLAYER_SPEED);
-                        break;
-                    case Directions.DOWN:
-                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y + PLAYER_SPEED);
-                        break;
-                    case Directions.LEFT:
-                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x - PLAYER_SPEED, this.players[socket.id].position.y);
-                        break;
-                    case Directions.RIGHT:
-                        this.players[socket.id].position = new Vec2(this.players[socket.id].position.x + PLAYER_SPEED, this.players[socket.id].position.y);
-                        break;
+                
+                // Check for Collisions
+                let collisionDir: Directions;
+
+                for (let socketId in this.players) {
+                    if (socketId !== socket.id) {
+                        const POS1 = this.players[socket.id].position as Vec2; // Current Player
+                        const POS2 = this.players[socketId].position as Vec2; // Opponent Player
+
+                        const COLLIDING = isColliding(
+                            POS1,
+                            PLAYER_DIMENSIONS.width,
+                            PLAYER_DIMENSIONS.height,
+                            POS2,
+                            PLAYER_DIMENSIONS.width,
+                            PLAYER_DIMENSIONS.height
+                        );
+
+                        // Check Direction
+                        if (COLLIDING) {
+                            const ON_TOP = (Math.abs(POS1.y - POS2.y) - 10 <= PLAYER_DIMENSIONS.height / 2);
+
+                            if (direction === Directions.RIGHT || direction === Directions.LEFT) {
+                                if (POS1.x >= POS2.x && ON_TOP) {
+                                    collisionDir = Directions.LEFT
+                                }
+                                else if (ON_TOP) {
+                                    collisionDir = Directions.RIGHT
+                                }
+                            }
+                            else {
+                                const ON_SIDE = (Math.abs(POS1.x - POS2.x) <= PLAYER_DIMENSIONS.width / 2);
+
+                                if (POS1.y >= POS2.y && ON_SIDE) {
+                                    collisionDir = Directions.UP
+                                }
+                                else if (ON_SIDE) {
+                                    collisionDir = Directions.DOWN
+                                }
+                            }
+                        }
+                        else {
+                            collisionDir = null;
+                        }
+                    }
                 }
 
-                this.namespace.emit(GameEvents.PLAYER_MOVE, {
-                    socketId: socket.id,
-                    direction: 0,
-                    name: this.players[socket.id].name,
-                    pos: {
-                        x: this.players[socket.id].position.x,
-                        y: this.players[socket.id].position.y
+                // Move Player on the Server Side
+                if (direction !== collisionDir) {
+                    switch (direction) {
+                        case Directions.UP:
+                            this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y - PLAYER_SPEED);
+                            break;
+                        case Directions.DOWN:
+                            this.players[socket.id].position = new Vec2(this.players[socket.id].position.x, this.players[socket.id].position.y + PLAYER_SPEED);
+                            break;
+                        case Directions.LEFT:
+                            this.players[socket.id].position = new Vec2(this.players[socket.id].position.x - PLAYER_SPEED, this.players[socket.id].position.y);
+                            break;
+                        case Directions.RIGHT:
+                            this.players[socket.id].position = new Vec2(this.players[socket.id].position.x + PLAYER_SPEED, this.players[socket.id].position.y);
+                            break;
                     }
-                });
+    
+                    // Sync Player Position with all Clients
+                    this.namespace.emit(GameEvents.PLAYER_MOVE, {
+                        socketId: socket.id,
+                        direction: 0,
+                        name: this.players[socket.id].name,
+                        pos: {
+                            x: this.players[socket.id].position.x,
+                            y: this.players[socket.id].position.y
+                        }
+                    });
+                }
             });
         });
     }

@@ -147,7 +147,7 @@ export class Player {
         this.calculatingSpeed = true;
 
         const SPEED_POS_OLD = new Vec2(this.sprite.x, this.sprite.y);
-        const RUN_ANIM_THRESHOLD = 0.5;
+        const RUN_ANIM_THRESHOLD = 0.55;
 
         setTimeout(() => {
 
