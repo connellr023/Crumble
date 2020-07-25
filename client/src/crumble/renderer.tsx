@@ -78,7 +78,6 @@ export function game(p: p5) {
         p.frameRate(60);
 
         $("canvas").css("image-rendering", "pixelated");
-        console.log(renderLayers);
     }
 
     p.draw = () => {

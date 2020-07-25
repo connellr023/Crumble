@@ -4,8 +4,8 @@
  */
 
 import {
-    Vec2, PlayerAnimationStates,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, ANIMATION_MS, PLAYER_DIMENSIONS
+    Vec2, PlayerAnimationStates, FacingDirections,
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, ANIMATION_MS, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -23,6 +23,7 @@ let animationInterval: NodeJS.Timeout;
 export class Player extends RenderController {
     public name: string;
     public pos: Vec2;
+    public direction: FacingDirections;
     public serverPos: Vec2;
     public socketId: string;
 
@@ -30,7 +31,9 @@ export class Player extends RenderController {
     private calculatingSpeed: boolean;
     private state: PlayerAnimationStates;
     private frame: number;
+
     private shadow: PlayerShadow;
+    private nametag: Nametag;
 
     /**
      * @param name Name of the Player
@@ -44,14 +47,26 @@ export class Player extends RenderController {
             this.pos = pos;
             this.serverPos = pos;
             this.socketId = socketId;
+            this.direction = FacingDirections.LEFT;
 
             this.calculatingSpeed = false;
             this.speed = Vec2.zero;
             this.state = PlayerAnimationStates.IDLE;
             this.frame = 0;
 
+            // Set Namtag Colour
+            let nametagColour = NAMETAG_ENEMY_COLOUR;
+
+            if (clientSocketId == this.socketId) {
+                nametagColour = NAMETAG_SELF_COLOUR;
+            }
+
+            // Instantiate Other Render Controllers
             this.shadow = new PlayerShadow(this.pos);
-            this.setRenderLayer(1);
+            this.nametag = new Nametag(this.name, nametagColour, this.pos);
+
+            // Set Render Layer
+            this.setRenderLayer(2);
         }
     }
 
@@ -93,12 +108,23 @@ export class Player extends RenderController {
         // Lerp Position
         this.pos = Vec2.lerp(this.pos, this.serverPos, 0.25);
 
-        const REND_POS = new Vec2(
-            (REND.windowWidth / 2) + this.pos.x + cameraPos.x,
-            (REND.windowHeight / 2) + this.pos.y + cameraPos.y
-        );
+        const REND_POS = convertToCameraSpace(this.pos);
 
         // Render Player Sprite
+        REND.push();
+
+        switch (this.direction) {
+            case FacingDirections.LEFT:
+                REND.scale(1, 1);
+                break;
+            case FacingDirections.RIGHT:
+                const HORIZONTAL_OFFSET = 682;
+
+                REND.translate(REND_POS.x + this.pos.x + HORIZONTAL_OFFSET + PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, 0);
+                REND.scale(-1, 1);
+                break;
+        }
+
         REND.imageMode(REND.CENTER);
         REND.image(
             assets.PLAYER_SPRITESHEET[this.frame],
@@ -107,9 +133,13 @@ export class Player extends RenderController {
             PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale,
             PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale
         );
+        REND.pop();
 
         // Set Shadow Position
         this.shadow.pos = new Vec2(this.pos.x, this.pos.y + PLAYER_SHADOW_OFFSET);
+
+        // Set Nametag Position
+        this.nametag.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_NAMETAG_OFFSET);
 
         // Update Player Speed
         if (!this.calculatingSpeed) {
@@ -159,7 +189,7 @@ export class Player extends RenderController {
 /**
  * Player Shadow Renderer
  */
-export class PlayerShadow extends RenderController {
+class PlayerShadow extends RenderController {
     public pos: Vec2;
 
     /**
@@ -168,7 +198,7 @@ export class PlayerShadow extends RenderController {
     constructor(pos: Vec2) {
         super(); {
             this.pos = pos;
-            this.setRenderLayer(0);
+            this.setRenderLayer(1);
         }
     }
 
@@ -176,10 +206,7 @@ export class PlayerShadow extends RenderController {
         const REND = gameInstance;
 
         // Render Shadow
-        const REND_POS = new Vec2(
-            (REND.windowWidth / 2) + this.pos.x + cameraPos.x,
-            (REND.windowHeight / 2) + this.pos.y + cameraPos.y
-        );
+        const REND_POS = convertToCameraSpace(this.pos);
 
         REND.tint(255, 80);
         REND.imageMode(REND.CENTER);
@@ -192,6 +219,52 @@ export class PlayerShadow extends RenderController {
         );
         REND.tint(255, 255);
     }
+}
+
+/**
+ * Player Nametag Renderer
+ */
+class Nametag extends RenderController {
+    public text: string;
+    public colour: string;
+    public pos: Vec2;
+
+    /**
+     * @param pos Position to Render Namtag at
+     */
+    constructor(text: string, colour: string, pos: Vec2) {
+        super(); {
+            this.text = text;
+            this.colour = colour;
+            this.pos = pos;
+
+            this.setRenderLayer(3);
+        }
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        // Render Nametag
+        const REND_POS = convertToCameraSpace(this.pos);
+
+        REND.fill(this.colour);
+        REND.textFont("Crumble");
+        REND.textAlign(REND.CENTER, REND.CENTER);
+        REND.textSize(30);
+        REND.text(this.text, REND_POS.x, REND_POS.y);
+    }
+}
+
+/**
+ * Converts a 2D Vector to a Position Relative to Camera View
+ * @param pos Position to Convert
+ */
+export function convertToCameraSpace(pos: Vec2): Vec2 {
+    return new Vec2(
+        (gameInstance.windowWidth / 2) + pos.x + cameraPos.x,
+        (gameInstance.windowHeight / 2) + pos.y + cameraPos.y
+    );
 }
 
 /**

@@ -28,7 +28,7 @@ export const PORT = 8000;
  */
 export const PLAYER_DIMENSIONS = {
     width: 42,
-    height: 66
+    height: 70
 }
 
 /**
@@ -48,6 +48,14 @@ export enum SocketEvents {
  */
 export enum GameEvents {
     PLAYER_MOVE = "playermove"
+}
+
+/**
+ * Enumeration of Directions the Player can Face
+ */
+export enum FacingDirections {
+    LEFT = "left",
+    RIGHT = "right"
 }
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import { io } from "./server";
-import { Vec2, randomInt, isColliding, GameEvents, SocketEvents, Directions, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS } from "./utils";
+import { Vec2, randomInt, isColliding, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -16,7 +16,7 @@ export let activeGames: Array<Game> = [];
 export class Player {
     public name: string; 
     public position: Vec2;
-    public direction: number;
+    public direction: FacingDirections;
 
     /**
      * @param name Name of Player
@@ -24,10 +24,10 @@ export class Player {
      * @param direction Direction Player is Facing
      * @param socketId The Socket ID of the Connected Player
      */
-    constructor (name: string, position: Vec2, direction: number) {
+    constructor (name: string, position: Vec2) {
         this.name = name;
         this.position = position;
-        this.direction = direction;
+        this.direction = FacingDirections.LEFT;
     }
 }
 
@@ -60,7 +60,7 @@ export class Game {
      * @param socketId ID of Active Socket Connection
      */
     public addPlayer(name: string, socketId: string) {
-        const PLAYER = new Player(name, Vec2.random(0, 160), 0);
+        const PLAYER = new Player(name, Vec2.random(0, 160));
         this.players[socketId] = PLAYER;
     }
 
@@ -85,6 +85,10 @@ export class Game {
                 this.addPlayer(name, socket.id);
                 console.log(`[+] Added Player "${name}" to "${this.namespace.name}"`);
 
+                // Send Socket ID to the Client
+                socket.emit(SocketEvents.SEND_ID, socket.id);
+
+                // Verify if Game Should Start
                 const START_GAME = (Object.keys(this.players).length === MAX_PLAYERS);
 
                 if (START_GAME) {
@@ -113,9 +117,6 @@ export class Game {
                         start: false
                     });
                 }
-
-                // Send Socket ID to the Client
-                socket.emit(SocketEvents.SEND_ID, socket.id);
             });
 
             // Socket Disconnect Event
@@ -192,16 +193,18 @@ export class Game {
                             break;
                         case Directions.LEFT:
                             this.players[socket.id].position = new Vec2(this.players[socket.id].position.x - PLAYER_SPEED, this.players[socket.id].position.y);
+                            this.players[socket.id].direction = FacingDirections.LEFT;
                             break;
                         case Directions.RIGHT:
                             this.players[socket.id].position = new Vec2(this.players[socket.id].position.x + PLAYER_SPEED, this.players[socket.id].position.y);
+                            this.players[socket.id].direction = FacingDirections.RIGHT;
                             break;
                     }
     
                     // Sync Player Position with all Clients
                     this.namespace.emit(GameEvents.PLAYER_MOVE, {
                         socketId: socket.id,
-                        direction: 0,
+                        direction: this.players[socket.id].direction,
                         name: this.players[socket.id].name,
                         pos: {
                             x: this.players[socket.id].position.x,

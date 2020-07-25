@@ -4,6 +4,8 @@
  */
 
 export const BG_COLOUR = "#121212";
+export const NAMETAG_SELF_COLOUR = "#4ceb34";
+export const NAMETAG_ENEMY_COLOUR = "#f71e42";
 
 export const ANIMATION_MS = 130;
 
@@ -36,6 +38,7 @@ export enum PlayerAnimationStates {
 export interface IPlayerData {
     socketId?: string
     name: string,
+    direction: FacingDirections,
     pos: {
         x: number,
         y: number
@@ -66,6 +69,14 @@ export enum SocketEvents {
  */
 export enum GameEvents {
     PLAYER_MOVE = "playermove"
+}
+
+/**
+ * Enumeration of Directions the Player can Face
+ */
+export enum FacingDirections {
+    LEFT = "left",
+    RIGHT = "right"
 }
 
 /**

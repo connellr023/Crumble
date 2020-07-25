@@ -79,16 +79,10 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
     // Player Move Event
     socket.on(GameEvents.PLAYER_MOVE, (player: IPlayerData) => {
-        const DATA: IPlayerData = {
-            name: player.name,
-            pos: {
-                x: player.pos.x,
-                y: player.pos.y
-            }
-        }
 
         // Move Player
-        connectedPlayers[player.socketId as string].serverPos = new Vec2(DATA.pos.x, DATA.pos.y);
+        connectedPlayers[player.socketId as string].serverPos = new Vec2(player.pos.x, player.pos.y);
+        connectedPlayers[player.socketId as string].direction = player.direction;
     });
 
     // Handle Keypresses
