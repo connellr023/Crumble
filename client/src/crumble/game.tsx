@@ -1,162 +1,196 @@
 /**
- * Minecraft TSE Main Game File
+ * Crumble Client Main Game File
  * @author Connell Reffo
  */
 
 import {
-    BG_COLOUR, Player, Vec2, IPlayerData, PlayerAnimationStates, CRUMBLE_GAME,
-    PLAYER_SPRITE, SHADOW_SPRITE, PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, ANIMATION_TIME
+    Vec2, PlayerAnimationStates,
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, ANIMATION_MS, PLAYER_DIMENSIONS
 } from "./utils";
 
-import { connectedPlayers, clientSocketId, inputUpdateInterval } from "./socket";
+import { clientSocketId, inputUpdateInterval } from "./socket";
+import { game, assets, RenderController, cameraPos } from "./renderer";
 
-import * as Phaser from "phaser";
+import $ from "jquery";
+import p5 from "p5";
 
-let game: Phaser.Game;
+let gameInstance: p5;
 let animationInterval: NodeJS.Timeout;
 
 /**
- * Main Crumble Scene
+ * Player Renderer
  */
-export class CrumbleGame extends Phaser.Scene {
-    public players: any = {};
+export class Player extends RenderController {
+    public name: string;
+    public pos: Vec2;
+    public serverPos: Vec2;
+    public socketId: string;
 
-    constructor() {
-        super({
-            key: CRUMBLE_GAME
-        });
-    }
+    private speed: Vec2;
+    private calculatingSpeed: boolean;
+    private state: PlayerAnimationStates;
+    private frame: number;
+    private shadow: PlayerShadow;
 
-    public preload() {
-        this.load.spritesheet(PLAYER_SPRITE, process.env.PUBLIC_URL + "/assets/player.png", { frameWidth: 5, frameHeight: 9 });
-        this.load.image(SHADOW_SPRITE, process.env.PUBLIC_URL + "/assets/shadow.png");
+    /**
+     * @param name Name of the Player
+     * @param pos Position of the Player
+     * @param socketId Socket ID of the Player
+     * @param renderLayer Layer to Render the Player on
+     */
+    constructor(name: string, pos: Vec2, socketId: string) {
+        super(); {
+            this.name = name;
+            this.pos = pos;
+            this.serverPos = pos;
+            this.socketId = socketId;
+
+            this.calculatingSpeed = false;
+            this.speed = Vec2.zero;
+            this.state = PlayerAnimationStates.IDLE;
+            this.frame = 0;
+
+            this.shadow = new PlayerShadow(this.pos);
+            this.setRenderLayer(1);
+        }
     }
 
     /**
-     * Instantiates a Player on the Client Side
-     * @param name is the Name of the Player
-     * @param pos is the Initial Position of the Player for it to be Rendered at
-     * @param socketId Socket ID of Player to Render
+     * Updates the Speed Variable of this Player
+     * @param socketId Socket ID of Player to Calculate Speed for
      */
-    public createPlayer(name: string, pos: Vec2, socketId: string) {
+    public async updateSpeed() {
 
-        // Create Shadow
-        let shadow = this.add.sprite(pos.x, pos.y + PLAYER_SHADOW_OFFSET, SHADOW_SPRITE);
-        shadow.scale = 6.3;
-        shadow.alpha = 0.3;
+        // Calculate Speed
+        this.calculatingSpeed = true;
 
-        // Create Nametag
-        let nametag = this.add.text(pos.x, pos.y - PLAYER_NAMETAG_OFFSET, name);
-        nametag.setAlign("center");
-        nametag.setFontSize(25);
-        nametag.setResolution(3);
-        nametag.setFontFamily("Crumble");
+        const SPEED_POS_OLD = new Vec2(this.pos.x, this.pos.y);
+        const RUN_ANIM_THRESHOLD = 0.55;
 
-        if (clientSocketId === socketId) {
-            nametag.setColor("#7cff70");
+        setTimeout(() => {
+
+            // Set Speed Variable
+            this.speed = new Vec2(
+                Math.abs(SPEED_POS_OLD.x - this.pos.x),
+                Math.abs(SPEED_POS_OLD.y - this.pos.y)
+            );
+
+            this.calculatingSpeed = false;
+        }, 150);
+
+        // Set Animation State
+        if (this.speed.x > RUN_ANIM_THRESHOLD || this.speed.y > RUN_ANIM_THRESHOLD) {
+            this.state = PlayerAnimationStates.RUN;
         }
         else {
-            nametag.setColor("#ff5252");
+            this.state = PlayerAnimationStates.IDLE;
         }
-
-        // Create Player
-        let player = this.add.sprite(pos.x, pos.y, PLAYER_SPRITE);
-        player.scale = 6;
-
-        this.players[socketId] = new Player(name, player, nametag, shadow);
     }
 
-    /**
-     * Creates Sprites When Game Starts
-     */
-    public create() {
-        this.cameras.main.setZoom(1.5);
+    public render() {
+        const REND = gameInstance;
 
-        // Render Players
-        for (let socketId in connectedPlayers) {
-            const PLAYER = connectedPlayers[socketId] as IPlayerData;
-            this.createPlayer(PLAYER.name, new Vec2(PLAYER.pos.x, PLAYER.pos.y), socketId);
+        // Lerp Position
+        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.25);
+
+        const REND_POS = new Vec2(
+            (REND.windowWidth / 2) + this.pos.x + cameraPos.x,
+            (REND.windowHeight / 2) + this.pos.y + cameraPos.y
+        );
+
+        // Render Player Sprite
+        REND.imageMode(REND.CENTER);
+        REND.image(
+            assets.PLAYER_SPRITESHEET[this.frame],
+            REND_POS.x,
+            REND_POS.y,
+            PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale,
+            PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale
+        );
+
+        // Set Shadow Position
+        this.shadow.pos = new Vec2(this.pos.x, this.pos.y + PLAYER_SHADOW_OFFSET);
+
+        // Update Player Speed
+        if (!this.calculatingSpeed) {
+            this.updateSpeed();
         }
 
-        // Initialize Player Animation Loop
-        animationInterval = setInterval(() => {
-            
-            // Loop Through Each Player
-            for (let socketId in this.players) {
-                const PLAYER = this.players[socketId] as Player;
+        // Set Animation State
+        const ANIM_SPEED_THRESHOLD = 0.4;
 
-                if (PLAYER.state === PlayerAnimationStates.IDLE) { // Idle Animation
-                    if (PLAYER.animationFrame > 1) {
-                        this.players[socketId].animationFrame = 0;
+        if (this.speed.x > ANIM_SPEED_THRESHOLD || this.speed.y > ANIM_SPEED_THRESHOLD) {
+            this.state = PlayerAnimationStates.RUN;
+        }
+        else {
+            this.state = PlayerAnimationStates.IDLE;
+        }
+
+        // Animate Player
+        switch (this.state) {
+            case PlayerAnimationStates.IDLE:
+                if (REND.frameCount % 20 === 0) {
+                    this.frame++;
+
+                    if (this.frame > 1) {
+                        this.frame = 0;
                     }
-
-                    this.players[socketId].sprite.setFrame(PLAYER.animationFrame);
                 }
-                else { // Run Animation
-                    if (PLAYER.animationFrame > 7) {
-                        this.players[socketId].animationFrame = 2;
-                    }
-                    else if (PLAYER.animationFrame < 2) {
-                        this.players[socketId].animationFrame = 2;
-                    }
 
-                    this.players[socketId].sprite.setFrame(PLAYER.animationFrame);
+                break;
+            case PlayerAnimationStates.RUN:
+                if (this.frame < 2) {
+                    this.frame = 2;
                 }
 
-                this.players[socketId].animationFrame++;
-            }
-        }, ANIMATION_TIME);
-    }
+                if (REND.frameCount % 10 === 0) {
+                    this.frame++;
 
-    public update() {
+                    if (this.frame > PLAYER_DIMENSIONS.frames - 1) {
+                        this.frame = 2;
+                    }
+                }
 
-        // Sync Players Variable with Connected Players
-        for (let socketId in connectedPlayers) {
-            const PLAYER = connectedPlayers[socketId] as IPlayerData;
-            const LERP_VEC = Vec2.lerp(
-                new Vec2(this.players[socketId].sprite.x, this.players[socketId].sprite.y),
-                new Vec2(PLAYER.pos.x, PLAYER.pos.y), 0.2
-            );
-            
-            this.players[socketId].sprite.setPosition(LERP_VEC.x, LERP_VEC.y);
+                break;
         }
-
-        // Update Players
-        for (let socketId in this.players) {
-            const PLAYER = this.players[socketId] as Player;
-
-            // Calculate Speed
-            if (!this.players[socketId].calculatingSpeed) {
-                this.players[socketId].updateSpeed();
-            }
-            
-            // Update Nametag Position
-            this.players[socketId].nametag.setPosition(PLAYER.sprite.x - (this.players[socketId].name.length * this.players[socketId].nametagOffsetX), PLAYER.sprite.y - PLAYER_NAMETAG_OFFSET);
-
-            // Update Shadow Position
-            this.players[socketId].shadow.setPosition(PLAYER.sprite.x, PLAYER.sprite.y + PLAYER_SHADOW_OFFSET);
-        }
-        
-        // Constantly Update Camera Center Position
-        this.cameras.main.centerOnX(0);
-        this.cameras.main.centerOnY(0);
     }
 }
 
 /**
- * Initialize Phaser
+ * Player Shadow Renderer
  */
-const config: Phaser.Types.Core.GameConfig = {
-    type: Phaser.AUTO,
-    parent: "crumble-client",
-    backgroundColor: BG_COLOUR,
-    scene: CrumbleGame,
-    scale: {
-        mode: Phaser.Scale.RESIZE
-    },
-    render: {
-        antialias: false,
-        pixelArt: true
+export class PlayerShadow extends RenderController {
+    public pos: Vec2;
+
+    /**
+     * @param pos Position to Render Shadow at
+     */
+    constructor(pos: Vec2) {
+        super(); {
+            this.pos = pos;
+            this.setRenderLayer(0);
+        }
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        // Render Shadow
+        const REND_POS = new Vec2(
+            (REND.windowWidth / 2) + this.pos.x + cameraPos.x,
+            (REND.windowHeight / 2) + this.pos.y + cameraPos.y
+        );
+
+        REND.tint(255, 80);
+        REND.imageMode(REND.CENTER);
+        REND.image(
+            assets.PLAYER_SHADOW,
+            REND_POS.x,
+            REND_POS.y,
+            6 * PLAYER_DIMENSIONS.scale,
+            4 * PLAYER_DIMENSIONS.scale
+        );
+        REND.tint(255, 255);
     }
 }
 
@@ -164,7 +198,8 @@ const config: Phaser.Types.Core.GameConfig = {
  * Starts Game
  */
 export function startGame() {
-    game = new Phaser.Game(config);
+    gameInstance = new p5(game);
+    $("canvas").css("display", "block");
 }
 
 /**
@@ -173,6 +208,5 @@ export function startGame() {
 export function stopGame() {
     clearInterval(inputUpdateInterval);
     clearInterval(animationInterval);
-
-    game.destroy(true);
+    $("canvas").remove();
 }

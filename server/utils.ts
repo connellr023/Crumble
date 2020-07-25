@@ -11,7 +11,7 @@ export const MAX_PLAYERS = 2;
 /**
  * Movement Speed of Players
  */
-export const PLAYER_SPEED = 7.5;
+export const PLAYER_SPEED = 10;
 
 /**
  * The Maximum Amount of Games that can be Concurrently Running
@@ -27,8 +27,8 @@ export const PORT = 8000;
  * Defines the Dimension of a Player on the Server Side
  */
 export const PLAYER_DIMENSIONS = {
-    width: 37,
-    height: 55
+    width: 42,
+    height: 66
 }
 
 /**

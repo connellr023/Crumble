@@ -3,16 +3,18 @@
  * @author Connell Reffo
  */
 
+import { initRenderLayers } from "./renderer";
 import { setEnteredQueue } from "./interface";
-import { startGame, stopGame } from "./game";
-import { IGameData, IPlayerData, SocketEvents, GameEvents, Directions } from "./utils";
+import { startGame, stopGame, Player } from "./game";
+import { IGameData, IPlayerData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
 
 export let clientSocketId: string;
-export let connectedPlayers: any;
 export let inputUpdateInterval: NodeJS.Timeout;
+
+let connectedPlayers: any = {};
 
 /**
  * Registers the Crumble Client with the Socket Server
@@ -40,10 +42,19 @@ export function handleClientSocket(name: string, lobbyId: string) {
             $("#name-choose-menu").css("display", "none");
             $("#match-wait-menu").css("display", "none");
 
-            startGame();
-            $("canvas").css("display", "block");
+            // Initialize Render Layers
+            initRenderLayers();
 
-            connectedPlayers = gameData.players as object;
+            // Instantiate Players
+            const PLAYERS: any = gameData.players;
+
+            for (let socketId in PLAYERS) {
+                const PLAYER = PLAYERS[socketId] as IPlayerData;
+                connectedPlayers[socketId] = new Player(PLAYER.name, new Vec2(PLAYER.pos.x, PLAYER.pos.y), socketId);
+            }
+
+            // Start Game
+            startGame();
         }
         else {
             $("#name-choose-menu").css("display", "none");
@@ -58,7 +69,6 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
         $("#name-choose-menu").css("display", "block");
         $("#match-wait-menu").css("display", "none");
-        $("canvas").css("display", "none");
         $("#name-input").val("");
 
         stopGame();
@@ -70,7 +80,6 @@ export function handleClientSocket(name: string, lobbyId: string) {
     // Player Move Event
     socket.on(GameEvents.PLAYER_MOVE, (player: IPlayerData) => {
         const DATA: IPlayerData = {
-            direction: player.direction,
             name: player.name,
             pos: {
                 x: player.pos.x,
@@ -78,12 +87,11 @@ export function handleClientSocket(name: string, lobbyId: string) {
             }
         }
 
-        connectedPlayers[player.socketId as string] = DATA;
+        // Move Player
+        connectedPlayers[player.socketId as string].serverPos = new Vec2(DATA.pos.x, DATA.pos.y);
     });
 
     // Handle Keypresses
-    const SEND_INPUT_MS = 100;
-
     let keysPressed: any = {};
 
     document.addEventListener("keydown", (key) => {
