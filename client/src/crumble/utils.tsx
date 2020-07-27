@@ -3,20 +3,54 @@
  * @author Connell Reffo
  */
 
+/**
+ * Colour of the Canvas Background
+ */
 export const BG_COLOUR = "#121212";
+
+/**
+ * Nametag Colour for the Client Player
+ */
 export const NAMETAG_SELF_COLOUR = "#4ceb34";
+
+/**
+ * Nametag Colour for the Opposing Player(s)
+ */
 export const NAMETAG_ENEMY_COLOUR = "#f71e42";
 
-export const ANIMATION_MS = 130;
-
+/**
+ * Vertical Offset of Shadow from the Player
+ */
 export const PLAYER_SHADOW_OFFSET = 32;
+
+/**
+ * Vertical Offset of Nametag from the Player
+ */
 export const PLAYER_NAMETAG_OFFSET = 53;
 
-export const MIN_LAYER = -20;
-export const MAX_LAYER = 20;
+/**
+ * Lowest Render Layer (Bottom)
+ */
+export const MIN_LAYER = 0;
 
+/**
+ * Highest Render Layer (Top)
+ */
+export const MAX_LAYER = 10;
+
+/**
+ * Size of Chunks in Tiles
+ */
+export const CHUNK_SIZE = 8;
+
+/**
+ * Delay Between Input Updates Sent to the Server
+ */
 export const SEND_INPUT_MS = 100;
 
+/**
+ * Dimensions of Player Sprite
+ */
 export const PLAYER_DIMENSIONS = {
     scale: 7.5,
     width: 5,
@@ -50,7 +84,15 @@ export interface IPlayerData {
  */
 export interface IGameData {
     start: boolean,
+    level?: ILevelMap,
     players?: object
+}
+
+/**
+ * Represents Level Data From the Server
+ */
+export interface ILevelMap {
+    chunks: Array<Vec2>
 }
 
 /**

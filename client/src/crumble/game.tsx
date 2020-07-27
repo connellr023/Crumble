@@ -5,7 +5,7 @@
 
 import {
     Vec2, PlayerAnimationStates, FacingDirections,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, ANIMATION_MS, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -57,7 +57,7 @@ export class Player extends RenderController {
             // Set Namtag Colour
             let nametagColour = NAMETAG_ENEMY_COLOUR;
 
-            if (clientSocketId == this.socketId) {
+            if (clientSocketId === this.socketId) {
                 nametagColour = NAMETAG_SELF_COLOUR;
             }
 
@@ -118,9 +118,9 @@ export class Player extends RenderController {
                 REND.scale(1, 1);
                 break;
             case FacingDirections.RIGHT:
-                const HORIZONTAL_OFFSET = 682;
+                const HORIZONTAL_OFFSET = 38;
 
-                REND.translate(REND_POS.x + this.pos.x + HORIZONTAL_OFFSET + PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, 0);
+                REND.translate(REND_POS.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, 0);
                 REND.scale(-1, 1);
                 break;
         }
@@ -196,10 +196,10 @@ class PlayerShadow extends RenderController {
      * @param pos Position to Render Shadow at
      */
     constructor(pos: Vec2) {
-        super(); {
-            this.pos = pos;
-            this.setRenderLayer(1);
-        }
+        super();
+
+        this.pos = pos;
+        this.setRenderLayer(1);
     }
 
     public render() {
@@ -233,13 +233,13 @@ class Nametag extends RenderController {
      * @param pos Position to Render Namtag at
      */
     constructor(text: string, colour: string, pos: Vec2) {
-        super(); {
-            this.text = text;
-            this.colour = colour;
-            this.pos = pos;
+        super();
+        
+        this.text = text;
+        this.colour = colour;
+        this.pos = pos;
 
-            this.setRenderLayer(3);
-        }
+        this.setRenderLayer(3);
     }
 
     public render() {

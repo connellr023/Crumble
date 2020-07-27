@@ -19,6 +19,11 @@ export const PLAYER_SPEED = 10;
 export const MAX_ACTIVE_GAMES = 5;
 
 /**
+ * Defines the Size of a Map Chunk (In Tiles)
+ */
+export const CHUNK_SIZE = 8;
+
+/**
  * Port that the Main Crumble Server will Run on
  */
 export const PORT = 8000;
@@ -66,6 +71,13 @@ export enum Directions {
     DOWN = "down",
     LEFT = "left",
     RIGHT = "right"
+}
+
+/**
+ * Represents Data Required for a Crumble Level
+ */
+export interface ILevelMap {
+    chunks: Array<Vec2>
 }
 
 /**
@@ -131,3 +143,9 @@ export class Vec2 {
         return new Vec2(randomInt(min, max), randomInt(min, max));
     }
 }
+
+export const TEST_MAP: ILevelMap = {
+    chunks: [
+        Vec2.zero
+    ]
+};

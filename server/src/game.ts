@@ -4,7 +4,7 @@
  */
 
 import { io } from "./server";
-import { Vec2, randomInt, isColliding, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS } from "./utils";
+import { Vec2, randomInt, isColliding, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -109,6 +109,7 @@ export class Game {
 
                     this.namespace.emit(SocketEvents.START_GAME, {
                         start: true,
+                        level: TEST_MAP,
                         players: playersObject
                     });
                 }

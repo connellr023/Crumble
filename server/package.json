@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon server.ts",
-    "final": "ts-node server.ts"
+    "dev": "nodemon ./src/server.ts",
+    "final": "ts-node ./src/server.ts"
   },
   "author": "Connell Reffo",
   "license": "ISC",
