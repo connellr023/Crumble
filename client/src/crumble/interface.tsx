@@ -4,6 +4,7 @@
  */
 
 import { handleClientSocket } from "./socket";
+import { NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR } from "./utils";
 
 import $ from "jquery";
 
@@ -67,4 +68,22 @@ export function connectToLobby() {
             });
         }
     }
+}
+
+/**
+ * Displays Win/Loss Screen
+ * @param name Name of the Winner
+ * @param won If the Current Client Won
+ */
+export function displayWinner(name: string, won: boolean) {
+    if (won) {
+        $("#winner-txt").css("color", NAMETAG_SELF_COLOUR);
+    }
+    else {
+        $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
+    }
+
+    $("canvas").css("filter", "blur(4px)");
+    $("#winner-txt").text(`< ${name.toUpperCase()} WINS >`);
+    $("#win-screen-container").css("display", "block");
 }

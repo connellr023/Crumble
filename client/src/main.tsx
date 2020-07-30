@@ -11,10 +11,18 @@ import { connectToLobby } from "./crumble/interface"
 
 import * as React from "react";
 
+/**
+ * Main Crumble Markup Component
+ */
 class Main extends React.Component {
     render() {
         return (
         <>
+            <div id="win-screen-container" style={{display: "none"}}>
+                <div id="winner-txt"></div>
+                <button id="exit-win-screen-btn" onClick={() => window.location.reload()}>BACK TO HOME</button>
+            </div>
+
             <div className="content-wrapper" id="name-choose-menu" style={{display: "block"}}>
                 <div className="title-txt">&lt; CRUMBLE &gt;</div>
                 <div id="client-msg" style={{display: "none"}}></div>

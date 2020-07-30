@@ -5,7 +5,7 @@
 
 import {
     Vec2, PlayerAnimationStates, FacingDirections,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -14,8 +14,39 @@ import { game, assets, RenderController, cameraPos } from "./renderer";
 import $ from "jquery";
 import p5 from "p5";
 
+/**
+ * Current Instance of P5 Renderer
+ */
 let gameInstance: p5;
-let animationInterval: NodeJS.Timeout;
+
+/**
+ * Level Chunk Renderer
+ */
+export class Chunk extends RenderController {
+    public chunkPos: Vec2;
+
+    /**
+     * @param chunkPos Position to Render Chunk at
+     */
+    constructor(chunkPos: Vec2) {
+        super();
+
+        this.chunkPos = chunkPos;
+
+        this.setRenderLayer(2);
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        const REND_POS = convertToCameraSpace(new Vec2(this.chunkPos.x * TOTAL_CHUNK_SIZE, this.chunkPos.y * TOTAL_CHUNK_SIZE));
+
+        REND.noStroke();
+        REND.fill("#1e324f");
+        REND.rectMode(REND.CENTER);
+        REND.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE, TOTAL_CHUNK_SIZE);
+    }
+}
 
 /**
  * Player Renderer
@@ -34,6 +65,10 @@ export class Player extends RenderController {
 
     private shadow: PlayerShadow;
     private nametag: Nametag;
+    
+    private dead: boolean;
+
+    private deathFallVelocity: number;
 
     /**
      * @param name Name of the Player
@@ -54,6 +89,10 @@ export class Player extends RenderController {
             this.state = PlayerAnimationStates.IDLE;
             this.frame = 0;
 
+            this.dead = false;
+
+            this.deathFallVelocity = 5;
+
             // Set Namtag Colour
             let nametagColour = NAMETAG_ENEMY_COLOUR;
 
@@ -66,7 +105,7 @@ export class Player extends RenderController {
             this.nametag = new Nametag(this.name, nametagColour, this.pos);
 
             // Set Render Layer
-            this.setRenderLayer(2);
+            this.setRenderLayer(5);
         }
     }
 
@@ -102,11 +141,38 @@ export class Player extends RenderController {
         }
     }
 
+    /**
+     * Triggers When this Player Dies
+     * @param fellOffFront Tells the Client if the Player Should be Rendered on Top or Behind Chunks (Adds Depth)
+     */
+    public onDeath(fellOffFront: boolean) {
+        let renderLayer = 1;
+        this.dead = true;
+
+        this.shadow.invisible = true;
+        this.nametag.invisible = true;
+
+        if (fellOffFront) {
+            renderLayer = 5;
+        }
+
+        this.setRenderLayer(renderLayer);
+
+        const DEATH_INTERVAL = setInterval(() => {
+            if (this.serverPos.y >= 610) {
+                clearInterval(DEATH_INTERVAL);
+            }
+
+            this.serverPos = new Vec2(this.pos.x, this.pos.y + this.deathFallVelocity);
+            this.deathFallVelocity += 0.4;
+        }, 15);
+    }
+
     public render() {
         const REND = gameInstance;
 
         // Lerp Position
-        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.25);
+        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.2);
 
         const REND_POS = convertToCameraSpace(this.pos);
 
@@ -149,39 +215,45 @@ export class Player extends RenderController {
         // Set Animation State
         const ANIM_SPEED_THRESHOLD = 0.4;
 
-        if (this.speed.x > ANIM_SPEED_THRESHOLD || this.speed.y > ANIM_SPEED_THRESHOLD) {
-            this.state = PlayerAnimationStates.RUN;
-        }
-        else {
-            this.state = PlayerAnimationStates.IDLE;
-        }
+        if (!this.dead) {
+            if (this.speed.x > ANIM_SPEED_THRESHOLD || this.speed.y > ANIM_SPEED_THRESHOLD) {
+                this.state = PlayerAnimationStates.RUN;
+            }
+            else {
+                this.state = PlayerAnimationStates.IDLE;
+            }
 
-        // Animate Player
-        switch (this.state) {
-            case PlayerAnimationStates.IDLE:
-                if (REND.frameCount % 20 === 0) {
-                    this.frame++;
+            // Animate Player
+            switch (this.state) {
+                case PlayerAnimationStates.IDLE:
+                    if (REND.frameCount % 20 === 0) {
+                        this.frame++;
 
-                    if (this.frame > 1) {
-                        this.frame = 0;
+                        if (this.frame > 1) {
+                            this.frame = 0;
+                        }
                     }
-                }
 
-                break;
-            case PlayerAnimationStates.RUN:
-                if (this.frame < 2) {
-                    this.frame = 2;
-                }
-
-                if (REND.frameCount % 10 === 0) {
-                    this.frame++;
-
-                    if (this.frame > PLAYER_DIMENSIONS.frames - 1) {
+                    break;
+                case PlayerAnimationStates.RUN:
+                    if (this.frame < 2) {
                         this.frame = 2;
                     }
-                }
 
-                break;
+                    if (REND.frameCount % 10 === 0) {
+                        this.frame++;
+
+                        if (this.frame > PLAYER_DIMENSIONS.frames - 1) {
+                            this.frame = 2;
+                        }
+                    }
+
+                    break;
+            }
+        }
+        else {
+            this.frame = 0;
+            this.state = PlayerAnimationStates.IDLE
         }
     }
 }
@@ -199,7 +271,7 @@ class PlayerShadow extends RenderController {
         super();
 
         this.pos = pos;
-        this.setRenderLayer(1);
+        this.setRenderLayer(4);
     }
 
     public render() {
@@ -239,7 +311,7 @@ class Nametag extends RenderController {
         this.colour = colour;
         this.pos = pos;
 
-        this.setRenderLayer(3);
+        this.setRenderLayer(6);
     }
 
     public render() {
@@ -280,6 +352,5 @@ export function startGame() {
  */
 export function stopGame() {
     clearInterval(inputUpdateInterval);
-    clearInterval(animationInterval);
     $("canvas").remove();
 }

@@ -43,6 +43,16 @@ export function initRenderLayers() {
     }
 }
 
+export function deleteRenderController(renderer: RenderController) {
+    for (let layer in renderLayers) {
+        for (let renderController in renderLayers[layer]) {
+            if (renderLayers[layer][renderController] === renderer) {
+                delete renderLayers[layer][renderController];
+            }
+        }
+    }
+}
+
 /**
  * Main P5 Instance to Handle RenderController Rendering
  */
@@ -88,7 +98,9 @@ export function game(p: p5) {
             const CONTROLLERS = renderLayers[layer] as Array<RenderController>;
 
             CONTROLLERS.forEach((renderController) => {
-                renderController.render();
+                if (!renderController.invisible) {
+                    renderController.render();
+                }
             });
         }
     }
@@ -102,13 +114,18 @@ export function game(p: p5) {
 
 export class RenderController {
     public renderLayer: number = 0;
+    public invisible: boolean = false;
 
     /**
      * Sets the Render Layer of the Render Controller
      * @param layer Render Layer to Set to
      */
     public setRenderLayer(layer: number) {
-        delete renderLayers[this.renderLayer.toString()][this];
+        renderLayers[this.renderLayer.toString()].forEach((renderer: RenderController, index: number) => {
+            if (renderer === this) {
+                delete renderLayers[this.renderLayer.toString()][index];
+            }
+        });
 
         this.renderLayer = layer;
         renderLayers[this.renderLayer.toString()].push(this);

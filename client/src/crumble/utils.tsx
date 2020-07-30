@@ -39,9 +39,19 @@ export const MIN_LAYER = 0;
 export const MAX_LAYER = 10;
 
 /**
+ * Size of Tiles
+ */
+export const TILE_SIZE = 30;
+
+/**
  * Size of Chunks in Tiles
  */
 export const CHUNK_SIZE = 8;
+
+/**
+ * Total Size of a Chunk
+ */
+export const TOTAL_CHUNK_SIZE = TILE_SIZE * CHUNK_SIZE;
 
 /**
  * Delay Between Input Updates Sent to the Server
@@ -89,6 +99,14 @@ export interface IGameData {
 }
 
 /**
+ * Represents Data about Player Death
+ */
+export interface IPlayerDeathData {
+    socketId: string,
+    fellOffFront: boolean
+}
+
+/**
  * Represents Level Data From the Server
  */
 export interface ILevelMap {
@@ -110,7 +128,9 @@ export enum SocketEvents {
  * Enumeration of Events that Will Take Place in Game
  */
 export enum GameEvents {
-    PLAYER_MOVE = "playermove"
+    PLAYER_MOVE = "playermove",
+    PLAYER_DIED = "playerdied",
+    PLAYER_WON = "playerwon"
 }
 
 /**

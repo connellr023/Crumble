@@ -9,19 +9,19 @@
 export const MAX_PLAYERS = 2;
 
 /**
- * Movement Speed of Players
- */
-export const PLAYER_SPEED = 10;
-
-/**
  * The Maximum Amount of Games that can be Concurrently Running
  */
 export const MAX_ACTIVE_GAMES = 5;
 
 /**
- * Defines the Size of a Map Chunk (In Tiles)
+ * Movement Speed of Players
  */
-export const CHUNK_SIZE = 8;
+export const PLAYER_SPEED = 10;
+
+/**
+ * Defines the Hitbox Size of a Map Chunk
+ */
+export const CHUNK_SIZE = 200;
 
 /**
  * Port that the Main Crumble Server will Run on
@@ -52,7 +52,9 @@ export enum SocketEvents {
  * Enumeration of Events that Will Take Place on the Game's Server
  */
 export enum GameEvents {
-    PLAYER_MOVE = "playermove"
+    PLAYER_MOVE = "playermove",
+    PLAYER_DIED = "playerdied",
+    PLAYER_WON = "playerwon"
 }
 
 /**
@@ -81,36 +83,6 @@ export interface ILevelMap {
 }
 
 /**
- * Checks if 2 Different Objects are Touching
- * @param pos The Position to Check if Inside
- * @param width The Width of the Initial Object
- * @param height The Height of the Initial Object
- * @param objPos The Target Position to Check
- * @param objWidth The Width of the Target
- * @param objHeight The Height of the Target
- */
-export function isColliding(pos: Vec2, width: number, height: number, objPos: Vec2, objWidth: number, objHeight: number): boolean {
-
-    // X Boundries
-    const X1 = objPos.x - objWidth / 2;
-    const X2 = objPos.x + objWidth / 2;
-
-    // Y Boundreis
-    const Y1 = objPos.y - objHeight / 2;
-    const Y2 = objPos.y + objHeight / 2;
-
-    // Check if Colliding
-    if (pos.x + (width / 2) >= X1 && pos.x - (width / 2) <= X2) {
-        if (pos.y - (height / 2) <= Y2 && pos.y + (height / 2) >= Y1) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-}
-
-/**
  * Generates a Random Integer in a Range
  * @param min Minimum Value of Output
  * @param max Maximum Value of Output
@@ -119,6 +91,42 @@ export function randomInt(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export class Collider {
+    public pos: Vec2;
+    public width: number;
+    public height: number;
+
+    constructor(pos: Vec2, width: number, height: number) {
+        this.pos = pos;
+        this.width = width;
+        this.height = height;
+    }
+
+    public static isColliding(col1: Collider, col2: Collider): boolean {
+
+        // X Boundries
+        const X1 = col1.pos.x - col1.width / 2;
+        const X2 = col1.pos.x + col1.width / 2;
+
+        // Y Boundreis
+        const Y1 = col1.pos.y - col1.height / 2;
+        const Y2 = col1.pos.y + col1.height / 2;
+
+        // Check if Colliding
+        if (col2.pos.x + (col2.width / 2) >= X1 && col2.pos.x - (col2.width / 2) <= X2) {
+            if (col2.pos.y - (col2.height / 2) <= Y2 && col2.pos.y + (col2.height / 2) >= Y1) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+    }
 }
 
 export class Vec2 {
@@ -144,8 +152,13 @@ export class Vec2 {
     }
 }
 
+/**
+ * Test
+ */
 export const TEST_MAP: ILevelMap = {
     chunks: [
-        Vec2.zero
+        new Vec2(0, 0),
+        new Vec2(1, 0),
+        new Vec2(0, -1)
     ]
 };

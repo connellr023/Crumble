@@ -28,7 +28,7 @@ export const server = APP.listen(PORT, () => {
 /**
  * Manage Socket Server Input/Output
  */
-export const io = socketIo.listen(server);
+export const io = socketIo.listen(server, {wsEngine: "ws"});
 
 /**
  * Finds an Availabl Lobby or Creates One and Returns the Lobby ID

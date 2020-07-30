@@ -72,6 +72,46 @@ div.subtitle-txt {
     font-size: 30px;
 }
 
+button#exit-win-screen-btn {
+    color: rgb(240, 154, 49);
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0);
+    border: 3px solid rgb(240, 154, 49);
+    position: fixed;
+    font-family: "Crumble";
+    font-size: 40px;
+    text-align: center;
+    top: calc(50% + 10px);
+    left: calc(50% - 100px);
+    transition: 0.4s;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}
+
+button#exit-win-screen-btn:hover {
+    color: rgb(182, 100, 0);
+    border-color: rgb(182, 100, 0);
+    transition: 0.4s;
+}
+
+div#win-screen-container {
+    background-color: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+div#winner-txt {
+    color: white;
+    font-family: "Crumble";
+    font-size: 80px;
+    position: fixed;
+    text-align: center;
+    top: calc(50% - 80px);
+    width: 100%;
+}
+
 div#client-msg {
     color: rgb(255, 36, 51);
     text-align: center;
