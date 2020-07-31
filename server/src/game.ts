@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { io } from "./server";
+import { IO } from "./server";
 import { Player } from "./gameobjects";
-import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP, CHUNK_SIZE } from "./utils";
+import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP, CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -23,6 +23,8 @@ export class Game {
     public namespace: socketIo.Namespace;
 
     private loadedMap: ILevelMap;
+    private ticker: NodeJS.Timeout;
+    private ticks: number = 0;
 
     constructor() {
 
@@ -39,8 +41,8 @@ export class Game {
     public registerActiveGame() {
         activeGames.push(this);
         console.log(`[+] Opened Game "${this.lobbyId}"`);
-
-        this.namespace = io.of(`/lobbies/${this.lobbyId}`);
+        
+        this.namespace = IO.of(`/lobbies/${this.lobbyId}`);
 
         this.start();
     }
@@ -66,7 +68,6 @@ export class Game {
 
                 const PLAYER_KEY = Object.keys(this.players)[chunkKey];
 
-                console.log(this.players[PLAYER_KEY]);
                 this.players[PLAYER_KEY].position = SPAWN_POS;
             }
             else {
@@ -96,10 +97,13 @@ export class Game {
     private closeLobby() {
 
         // Delete Current Game
-        delete io.nsps[this.namespace.name];
+        delete IO.nsps[this.namespace.name];
         activeGames = activeGames.filter((game) => {
             return game.lobbyId !== this.lobbyId;
         });
+
+        // Stop Game Ticker
+        clearInterval(this.ticker);
 
         console.log(`[x] Closed Lobby "${this.lobbyId}"`);
     }
@@ -204,7 +208,7 @@ export class Game {
                 let chunkPos = this.loadedMap.chunks[key];
 
                 const PLAYER_HITBOX = PLAYER_DIMENSIONS.width;
-                const CHUNK_WIDTH_PADDING = 15;
+                const CHUNK_WIDTH_PADDING = 25;
 
                 // Check if Player is on the Front or the Back of the Chunk
                 if (PLAYER_POS.y <= chunkPos.y * CHUNK_SIZE + PLAYER_DIMENSIONS.height) {
@@ -245,9 +249,28 @@ export class Game {
     }
 
     /**
+     * Destroys a Tile at a Given Position
+     * @param tilePos Position of Tile to Destroy
+     */
+    private destroyTile(tilePos: Vec2) {
+        this.loadedMap.destroyedTiles.push(tilePos);
+        this.namespace.emit(GameEvents.TILE_DESTROYED, tilePos);
+    }
+
+    /**
+     * Initializes the Game Ticker
+     */
+    private initTicker() {
+        this.ticker = setInterval(() => {
+            this.tick();
+            this.ticks++;
+        }, TICK_MS);
+    }
+
+    /**
      * Executes When the Game Starts
      */
-    public start() {
+    private start() {
         
         // Setup Namespace
         this.namespace.on(SocketEvents.CONNECTION, (socket) => {
@@ -287,6 +310,9 @@ export class Game {
                         level: this.loadedMap,
                         players: playersObject
                     });
+
+                    // Initialize Game Ticker
+                    this.initTicker();
                 }
                 else {
 
@@ -374,5 +400,19 @@ export class Game {
                 });
             });
         });
+    }
+
+    /**
+     * Executes Continuously
+     */
+    private tick() {
+        
+        // Tile Destruction
+        if (this.ticks % DESTROY_TILE_TICKS === 0) {
+            setTimeout(() => {
+                console.log("Destroyed Tile");
+                //this.destroyTile(Vec2.zero);
+            }, TILE_DESTROY_WARNING_MS);
+        }
     }
 }

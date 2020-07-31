@@ -9,6 +9,16 @@
 export const BG_COLOUR = "#121212";
 
 /**
+ * Colour of Chunk Ground
+ */
+export const CHUNK_GROUND_COLOUR = "#c2c2c2";
+
+/**
+ * Colour of Chunk Edge
+ */
+export const CHUNK_EDGE_COLOUR = "#9c9c9c";
+
+/**
  * Nametag Colour for the Client Player
  */
 export const NAMETAG_SELF_COLOUR = "#4ceb34";
@@ -39,14 +49,19 @@ export const MIN_LAYER = 0;
 export const MAX_LAYER = 10;
 
 /**
+ * Height of a Chunk's Edge
+ */
+export const CHUNK_EDGE_HEIGHT = 45;
+
+/**
  * Size of Tiles
  */
-export const TILE_SIZE = 30;
+export const TILE_SIZE = 60;
 
 /**
  * Size of Chunks in Tiles
  */
-export const CHUNK_SIZE = 8;
+export const CHUNK_SIZE = 4;
 
 /**
  * Total Size of a Chunk
@@ -54,9 +69,19 @@ export const CHUNK_SIZE = 8;
 export const TOTAL_CHUNK_SIZE = TILE_SIZE * CHUNK_SIZE;
 
 /**
+ * Solves Pixel Gap Between Chunks
+ */
+export const CHUNK_SIZE_PADDING = 2;
+
+/**
  * Delay Between Input Updates Sent to the Server
  */
 export const SEND_INPUT_MS = 100;
+
+/**
+ * Warning Time Before a Tile Destroys
+ */
+export const TILE_DESTROY_WARNING_MS = 1500;
 
 /**
  * Dimensions of Player Sprite
@@ -130,7 +155,8 @@ export enum SocketEvents {
 export enum GameEvents {
     PLAYER_MOVE = "playermove",
     PLAYER_DIED = "playerdied",
-    PLAYER_WON = "playerwon"
+    PLAYER_WON = "playerwon",
+    TILE_DESTROYED = "tiledestroyed"
 }
 
 /**
@@ -159,6 +185,7 @@ export enum Directions {
 export function randomInt(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
+    
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 

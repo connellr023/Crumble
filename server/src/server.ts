@@ -12,23 +12,23 @@ import * as bodyParser from "body-parser";
 import * as socketIo from "socket.io";
 
 const APP = require("express")();
-export const ROUTER = express.Router({ caseSensitive: true });
+export const ROUTER = express.Router({caseSensitive: true});
 
-APP.use(bodyParser.urlencoded({ extended: true }));
+APP.use(bodyParser.urlencoded({extended: true}));
 APP.use(ROUTER);
 APP.use(cors());
 
 /**
  * Server Variable
  */
-export const server = APP.listen(PORT, () => {
+export const SERVER = APP.listen(PORT, () => {
     console.log("Started Main Crumble Server");
 });
 
 /**
  * Manage Socket Server Input/Output
  */
-export const io = socketIo.listen(server, {wsEngine: "ws"});
+export const IO = socketIo.listen(SERVER, {httpCompression: false, transports: ["websocket"]});
 
 /**
  * Finds an Availabl Lobby or Creates One and Returns the Lobby ID

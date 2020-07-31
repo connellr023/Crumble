@@ -5,8 +5,8 @@
 
 import { displayWinner } from "./interface";
 import { initRenderLayers, deleteRenderController } from "./renderer";
-import { startGame, Player, Chunk } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS } from "./utils";
+import { startGame, Player, Chunk, DestroyedTile } from "./game";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -27,9 +27,14 @@ export let inputUpdateInterval: NodeJS.Timeout;
 export let loadedChunks: Array<Chunk> = [];
 
 /**
+ * List of Destroyed Tile Render Controllers
+ */
+export let destroyedTiles: Array<DestroyedTile> = [];
+
+/**
  * Tracks Players Connected with the Server
  */
-let connectedPlayers: any = {};
+export let connectedPlayers: any = {};
 
 /**
  * Handles Crumble Keyboard Input
@@ -72,7 +77,7 @@ function handleKeyboardInput(socket: SocketIOClient.Socket) {
  * @param lobbyId The Lobby ID to Connect to
  */
 export function handleClientSocket(name: string, lobbyId: string) {
-    const socket = io(`/lobbies/${lobbyId}`);
+    const socket = io(`ws://192.168.0.22:8000/lobbies/${lobbyId}`, {onlyBinaryUpgrades: true, transports: ["websocket"], upgrade: false});
 
     // Connection Event
     socket.on(SocketEvents.CONNECTED, () => {
@@ -149,6 +154,13 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
         // Trigger On Death Event
         connectedPlayers[deathInfo.socketId].onDeath(deathInfo.fellOffFront);
+    });
+
+    // Tile Destroy Event
+    socket.on(GameEvents.TILE_DESTROYED, (tilePos: Vec2) => {
+        setTimeout(() => {
+            destroyedTiles.push(new DestroyedTile(tilePos));
+        }, TILE_DESTROY_WARNING_MS);
     });
 
     // On Player Win Event

@@ -21,7 +21,22 @@ export const PLAYER_SPEED = 10;
 /**
  * Defines the Hitbox Size of a Map Chunk
  */
-export const CHUNK_SIZE = 200;
+export const CHUNK_SIZE = 230;
+
+/**
+ * Warning Time Before a Tile Destroys
+ */
+export const TILE_DESTROY_WARNING_MS = 1500;
+
+/**
+ * Amount of Ticks Between Tile Destruction
+ */
+export const DESTROY_TILE_TICKS = 200;
+
+/**
+ * How Often Code in the Game Tick Function is Called
+ */
+export const TICK_MS = 100;
 
 /**
  * Port that the Main Crumble Server will Run on
@@ -54,7 +69,8 @@ export enum SocketEvents {
 export enum GameEvents {
     PLAYER_MOVE = "playermove",
     PLAYER_DIED = "playerdied",
-    PLAYER_WON = "playerwon"
+    PLAYER_WON = "playerwon",
+    TILE_DESTROYED = "tiledestroyed"
 }
 
 /**
@@ -79,7 +95,8 @@ export enum Directions {
  * Represents Data Required for a Crumble Level
  */
 export interface ILevelMap {
-    chunks: Array<Vec2>
+    chunks: Array<Vec2>,
+    destroyedTiles: Array<Vec2>
 }
 
 /**
@@ -159,6 +176,10 @@ export const TEST_MAP: ILevelMap = {
     chunks: [
         new Vec2(0, 0),
         new Vec2(1, 0),
-        new Vec2(0, -1)
-    ]
+        new Vec2(2, -1),
+        new Vec2(1, -1),
+        new Vec2(0, -1),
+        new Vec2(-1, -1)
+    ],
+    destroyedTiles: []
 };

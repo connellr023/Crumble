@@ -4,8 +4,8 @@
  */
 
 import {
-    Vec2, PlayerAnimationStates, FacingDirections,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE
+    Vec2, PlayerAnimationStates, FacingDirections, randomInt,
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_GROUND_COLOUR, CHUNK_EDGE_COLOUR, CHUNK_EDGE_HEIGHT, TILE_SIZE, BG_COLOUR
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -25,6 +25,8 @@ let gameInstance: p5;
 export class Chunk extends RenderController {
     public chunkPos: Vec2;
 
+    private chunkEdge: ChunkEdge;
+
     /**
      * @param chunkPos Position to Render Chunk at
      */
@@ -32,6 +34,7 @@ export class Chunk extends RenderController {
         super();
 
         this.chunkPos = chunkPos;
+        this.chunkEdge = new ChunkEdge(this.chunkPos);
 
         this.setRenderLayer(2);
     }
@@ -40,11 +43,110 @@ export class Chunk extends RenderController {
         const REND = gameInstance;
 
         const REND_POS = convertToCameraSpace(new Vec2(this.chunkPos.x * TOTAL_CHUNK_SIZE, this.chunkPos.y * TOTAL_CHUNK_SIZE));
-
+        
+        // Render Chunk Ground
         REND.noStroke();
-        REND.fill("#1e324f");
+        REND.fill(CHUNK_GROUND_COLOUR);
         REND.rectMode(REND.CENTER);
-        REND.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE, TOTAL_CHUNK_SIZE);
+        REND.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING);
+    }
+}
+
+/**
+ * Chunk Edge Renderer
+ */
+class ChunkEdge extends RenderController {
+    public chunkPos: Vec2;
+
+    private particles: Array<{pos: Vec2, size: number, speed: number, direction: number}>;
+
+    /**
+     * @param chunkPos Position of Chunk to Place Edge At
+     */
+    constructor(chunkPos: Vec2) {
+        super();
+
+        this.chunkPos = chunkPos;
+        this.particles = [];
+
+        this.initParticles();
+        this.setRenderLayer(1);
+    }
+
+    /**
+     * Initializes Chunk Edge Particle Effect
+     */
+    private initParticles() {
+        const PARTICLE_COUNT = randomInt(7, 12);
+
+        for (let pc = 0; pc < PARTICLE_COUNT; pc++) {
+            const RAND_SIZE = randomInt(8, 12);
+            const RAND_POS = new Vec2(randomInt(0, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING) + 6, randomInt(0, CHUNK_EDGE_HEIGHT) + RAND_SIZE + 6 * 1.8);
+
+            let particleDir = randomInt(-1, 1);
+
+            if (particleDir === 0) {
+                particleDir = 1;
+            }
+
+            this.particles.push({
+                pos: RAND_POS,
+                size: RAND_SIZE,
+                speed: randomInt(1, 6) * 0.015,
+                direction: particleDir
+            });
+        }
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        const REND_POS = convertToCameraSpace(new Vec2(this.chunkPos.x * TOTAL_CHUNK_SIZE, this.chunkPos.y * TOTAL_CHUNK_SIZE + (TOTAL_CHUNK_SIZE / 2) + (CHUNK_EDGE_HEIGHT / 2)));
+
+        // Render Chunk Edge
+        REND.fill(CHUNK_EDGE_COLOUR);
+        REND.rectMode(REND.CENTER);
+        REND.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT);
+
+        // Render Particles
+        this.particles.forEach((particle) => {
+            particle.pos = new Vec2(particle.pos.x, particle.pos.y + REND.sin(REND.frameCount * 0.03) * particle.speed * particle.direction);
+
+            const PARTICLE_REND_POS = new Vec2(REND_POS.x + particle.pos.x - (TOTAL_CHUNK_SIZE / 2), REND_POS.y + particle.pos.y);
+
+            REND.fill(CHUNK_EDGE_COLOUR);
+            REND.rectMode(REND.CENTER);
+            REND.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
+        });
+    }
+}
+
+/**
+ * Destroyed Tile Renderer
+ */
+export class DestroyedTile extends RenderController {
+    public tilePos: Vec2;
+
+    /**
+     * @param tilePos Position of Destroyed Tile
+     */
+    constructor(tilePos: Vec2) {
+        super();
+
+        this.tilePos = tilePos;
+
+        this.setRenderLayer(3);
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        const REND_POS = convertToCameraSpace(new Vec2(this.tilePos.x * TILE_SIZE, this.tilePos.y * TILE_SIZE + (TILE_SIZE / 2)));
+
+        // Render Destroyed Tile
+        REND.fill(BG_COLOUR);
+        REND.rectMode(REND.CENTER);
+        REND.rect(REND_POS.x, REND_POS.y, TILE_SIZE + CHUNK_SIZE_PADDING, TILE_SIZE + CHUNK_SIZE_PADDING);
     }
 }
 
@@ -146,7 +248,7 @@ export class Player extends RenderController {
      * @param fellOffFront Tells the Client if the Player Should be Rendered on Top or Behind Chunks (Adds Depth)
      */
     public onDeath(fellOffFront: boolean) {
-        let renderLayer = 1;
+        let renderLayer = 0;
         this.dead = true;
 
         this.shadow.invisible = true;
@@ -184,9 +286,9 @@ export class Player extends RenderController {
                 REND.scale(1, 1);
                 break;
             case FacingDirections.RIGHT:
-                const HORIZONTAL_OFFSET = 38;
+                const HORIZONTAL_OFFSET = 5;
 
-                REND.translate(REND_POS.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, 0);
+                REND.translate(REND_POS.x - cameraPos.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width, 0);
                 REND.scale(-1, 1);
                 break;
         }
@@ -200,12 +302,6 @@ export class Player extends RenderController {
             PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale
         );
         REND.pop();
-
-        // Set Shadow Position
-        this.shadow.pos = new Vec2(this.pos.x, this.pos.y + PLAYER_SHADOW_OFFSET);
-
-        // Set Nametag Position
-        this.nametag.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_NAMETAG_OFFSET);
 
         // Update Player Speed
         if (!this.calculatingSpeed) {
@@ -255,6 +351,12 @@ export class Player extends RenderController {
             this.frame = 0;
             this.state = PlayerAnimationStates.IDLE
         }
+
+        // Set Shadow Position
+        this.shadow.pos = new Vec2(this.pos.x, this.pos.y + PLAYER_SHADOW_OFFSET);
+
+        // Set Nametag Position
+        this.nametag.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_NAMETAG_OFFSET);
     }
 }
 
@@ -280,14 +382,14 @@ class PlayerShadow extends RenderController {
         // Render Shadow
         const REND_POS = convertToCameraSpace(this.pos);
 
-        REND.tint(255, 80);
+        REND.tint(255, 70);
         REND.imageMode(REND.CENTER);
         REND.image(
             assets.PLAYER_SHADOW,
             REND_POS.x,
             REND_POS.y,
-            6 * PLAYER_DIMENSIONS.scale,
-            4 * PLAYER_DIMENSIONS.scale
+            6 * PLAYER_DIMENSIONS.scale * 0.9,
+            4 * PLAYER_DIMENSIONS.scale * 0.9
         );
         REND.tint(255, 255);
     }
@@ -317,13 +419,18 @@ class Nametag extends RenderController {
     public render() {
         const REND = gameInstance;
 
-        // Render Nametag
         const REND_POS = convertToCameraSpace(this.pos);
 
+        // Render Background
+        REND.fill(REND.color(0, 50));
+        REND.rectMode(REND.CENTER);
+        REND.rect(REND_POS.x, REND_POS.y + 2, this.text.length * 13, 25);
+
+        // Render Text
         REND.fill(this.colour);
         REND.textFont("Crumble");
         REND.textAlign(REND.CENTER, REND.CENTER);
-        REND.textSize(30);
+        REND.textSize(25);
         REND.text(this.text, REND_POS.x, REND_POS.y);
     }
 }
@@ -334,8 +441,8 @@ class Nametag extends RenderController {
  */
 export function convertToCameraSpace(pos: Vec2): Vec2 {
     return new Vec2(
-        (gameInstance.windowWidth / 2) + pos.x + cameraPos.x,
-        (gameInstance.windowHeight / 2) + pos.y + cameraPos.y
+        (gameInstance.windowWidth / 2) + pos.x - cameraPos.x,
+        (gameInstance.windowHeight / 2) + pos.y - cameraPos.y
     );
 }
 
