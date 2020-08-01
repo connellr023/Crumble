@@ -5,8 +5,8 @@
 
 import { displayWinner } from "./interface";
 import { initRenderLayers, deleteRenderController } from "./renderer";
-import { startGame, Player, Chunk, DestroyedTile } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS } from "./utils";
+import { startGame, Player, Chunk, TileDestroyParticles } from "./game";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -25,11 +25,6 @@ export let inputUpdateInterval: NodeJS.Timeout;
  * List of Chunk Render Controllers
  */
 export let loadedChunks: Array<Chunk> = [];
-
-/**
- * List of Destroyed Tile Render Controllers
- */
-export let destroyedTiles: Array<DestroyedTile> = [];
 
 /**
  * Tracks Players Connected with the Server
@@ -115,6 +110,8 @@ export function handleClientSocket(name: string, lobbyId: string) {
                 loadedChunks.push(new Chunk(CHUNK_POS));
             });
 
+            loadedChunks = generateChunkEdges(loadedChunks);
+
             // Start Game
             handleKeyboardInput(socket);
             startGame();
@@ -158,14 +155,34 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
     // Tile Destroy Event
     socket.on(GameEvents.TILE_DESTROYED, (tilePos: Vec2) => {
+        const PARTICLES = new TileDestroyParticles(tilePos);
+
         setTimeout(() => {
-            destroyedTiles.push(new DestroyedTile(tilePos));
+            PARTICLES.stopParticles = true;
+
+            // Modify Tile Variable in Chunk
+            for (let chunkKey in loadedChunks) {
+                const CHUNK = loadedChunks[chunkKey];
+
+                for (let tileKey in CHUNK.tiles) {
+                    const TILE = CHUNK.tiles[tileKey];
+
+                    if (TILE.pos.x === tilePos.x && TILE.pos.y === tilePos.y) {
+                        loadedChunks[chunkKey].tiles[tileKey].destroyed = true;
+
+                        break;
+                    }
+                }
+            }
         }, TILE_DESTROY_WARNING_MS);
     });
 
     // On Player Win Event
     socket.on(GameEvents.PLAYER_WON, (socketId: string) => {
         clearInterval(inputUpdateInterval);
-        displayWinner(connectedPlayers[socketId].name, clientSocketId === socketId);
+    
+        setTimeout(() => {
+            displayWinner(connectedPlayers[socketId].name, clientSocketId === socketId);
+        }, 1000);
     });
 }

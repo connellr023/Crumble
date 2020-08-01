@@ -5,7 +5,7 @@
 
 import { IO } from "./server";
 import { Player } from "./gameobjects";
-import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP, CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS } from "./utils";
+import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -25,6 +25,9 @@ export class Game {
     private loadedMap: ILevelMap;
     private ticker: NodeJS.Timeout;
     private ticks: number = 0;
+
+    private availableTiles: Array<Vec2> = [];
+    private destroyedTiles: Array<Vec2> = [];
 
     constructor() {
 
@@ -64,7 +67,7 @@ export class Game {
         for (let chunkKey = 0; chunkKey< this.loadedMap.chunks.length; chunkKey++) {
             if (chunkKey < Object.keys(this.players).length) {
                 const CHUNK_POS = this.loadedMap.chunks[chunkKey];
-                const SPAWN_POS = new Vec2(CHUNK_POS.x * CHUNK_SIZE, CHUNK_POS.y * CHUNK_SIZE);
+                const SPAWN_POS = new Vec2(CHUNK_POS.x * TOTAL_CHUNK_SIZE, CHUNK_POS.y * TOTAL_CHUNK_SIZE);
 
                 const PLAYER_KEY = Object.keys(this.players)[chunkKey];
 
@@ -74,6 +77,21 @@ export class Game {
                 break;
             }
         }
+    }
+
+    /**
+     * Generates Positions for Tiles Based on Each Chunk
+     */
+    private registerChunkTiles() {
+        this.loadedMap.chunks.forEach((chunk) => {
+            for (let y = 0; y < CHUNK_SIZE; y++) {
+                for (let x = 0; x < CHUNK_SIZE; x++) {
+                    const TILE_POS = new Vec2(x + (chunk.x * CHUNK_SIZE), y + (chunk.y * CHUNK_SIZE));
+
+                    this.availableTiles.push(TILE_POS);
+                }
+            }
+        });
     }
 
     /**
@@ -204,21 +222,22 @@ export class Game {
             let withinMap = false;
             let fellOffFront = false;
 
+            const PLAYER_HITBOX = 20;
+            const CHUNK_WIDTH_PADDING = 25;  
+
+            // Check if Inside any Chunk
             for (let key in this.loadedMap.chunks) {
                 let chunkPos = this.loadedMap.chunks[key];
 
-                const PLAYER_HITBOX = PLAYER_DIMENSIONS.width;
-                const CHUNK_WIDTH_PADDING = 25;
-
                 // Check if Player is on the Front or the Back of the Chunk
-                if (PLAYER_POS.y <= chunkPos.y * CHUNK_SIZE + PLAYER_DIMENSIONS.height) {
+                if (PLAYER_POS.y <= chunkPos.y * TOTAL_CHUNK_SIZE + PLAYER_DIMENSIONS.height) {
                     playerHitboxVertOffset = 4;           
                 }
                 else {
                     fellOffFront = true;
                 }
 
-                // Create Colliders
+                // Initialize Colliders
                 const PLAYER_COLLIDER = new Collider(
                     new Vec2(PLAYER_POS.x, PLAYER_POS.y + playerHitboxVertOffset),
                     PLAYER_HITBOX,
@@ -226,9 +245,9 @@ export class Game {
                 );
 
                 const CHUNK_COLLIDER = new Collider(
-                    new Vec2(chunkPos.x * CHUNK_SIZE, chunkPos.y * CHUNK_SIZE),
-                    CHUNK_SIZE + PLAYER_DIMENSIONS.width + CHUNK_WIDTH_PADDING,
-                    CHUNK_SIZE + PLAYER_DIMENSIONS.height
+                    new Vec2(chunkPos.x * TOTAL_CHUNK_SIZE, chunkPos.y * TOTAL_CHUNK_SIZE),
+                    TOTAL_CHUNK_SIZE + PLAYER_DIMENSIONS.width + CHUNK_WIDTH_PADDING,
+                    TOTAL_CHUNK_SIZE + PLAYER_DIMENSIONS.height
                 );
 
                 // Check if Inside Chunk
@@ -237,6 +256,41 @@ export class Game {
                 if (INSIDE_CHUNK) {
                     withinMap = true;
                     break;
+                }
+            }
+
+            // Check if On Destroyed Tile
+            if (withinMap) {
+                const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
+
+                const TILE_HITBOX_DIMENSIONS = {
+                    width: 11,
+                    height: 14,
+                    vertOffset: 7
+                }
+
+                for (let key in this.destroyedTiles) {
+                    const TILE_POS = this.destroyedTiles[key];
+
+                    // Initialize Colliders
+                    const TILE_COLLIDER = new Collider(
+                        new Vec2(TILE_POS.x * TILE_SIZE - (TILE_SIZE * 1.5), TILE_POS.y * TILE_SIZE - (TILE_SIZE * 1.5) + TILE_HITBOX_DIMENSIONS.vertOffset),
+                        TILE_HITBOX_DIMENSIONS.width,
+                        TILE_HITBOX_DIMENSIONS.height
+                    );
+
+                    const PLAYER_COLLIDER = new Collider(
+                        new Vec2(PLAYER_POS.x, PLAYER_POS.y + 40),
+                        PLAYER_HITBOX,
+                        PLAYER_HITBOX,
+                    );
+
+                    const ON_DESTROYED_TILE = Collider.isColliding(PLAYER_COLLIDER, TILE_COLLIDER);
+                    
+                    if (ON_DESTROYED_TILE) {
+                        withinMap = false;
+                        fellOffFront = false;
+                    }
                 }
             }
 
@@ -255,6 +309,14 @@ export class Game {
     private destroyTile(tilePos: Vec2) {
         this.loadedMap.destroyedTiles.push(tilePos);
         this.namespace.emit(GameEvents.TILE_DESTROYED, tilePos);
+
+        this.availableTiles = this.availableTiles.filter((tile) => {
+            return tile != tilePos;
+        });
+
+        setTimeout(() => {
+            this.destroyedTiles.push(tilePos);
+        }, TILE_DESTROY_WARNING_MS);
     }
 
     /**
@@ -288,6 +350,8 @@ export class Game {
 
                 if (START_GAME) {
                     this.initPlayerSpawns();
+                    this.registerChunkTiles();
+
                     let playersObject = {};
 
                     // Parse Player Data into an Object
@@ -409,10 +473,12 @@ export class Game {
         
         // Tile Destruction
         if (this.ticks % DESTROY_TILE_TICKS === 0) {
-            setTimeout(() => {
-                console.log("Destroyed Tile");
-                //this.destroyTile(Vec2.zero);
-            }, TILE_DESTROY_WARNING_MS);
+            const RAND_TILE_INDEX = randomInt(0, this.availableTiles.length);
+            const TILE_POS = this.availableTiles[RAND_TILE_INDEX];
+
+            if (TILE_POS != null) {
+                this.destroyTile(TILE_POS);
+            }
         }
     }
 }

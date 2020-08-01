@@ -19,9 +19,14 @@ export const MAX_ACTIVE_GAMES = 5;
 export const PLAYER_SPEED = 10;
 
 /**
+ * Size of a Chunk in Tiles
+ */
+export const CHUNK_SIZE = 4;
+
+/**
  * Defines the Hitbox Size of a Map Chunk
  */
-export const CHUNK_SIZE = 230;
+export const TOTAL_CHUNK_SIZE = 230;
 
 /**
  * Warning Time Before a Tile Destroys
@@ -31,7 +36,7 @@ export const TILE_DESTROY_WARNING_MS = 1500;
 /**
  * Amount of Ticks Between Tile Destruction
  */
-export const DESTROY_TILE_TICKS = 200;
+export const DESTROY_TILE_TICKS = 130;
 
 /**
  * How Often Code in the Game Tick Function is Called

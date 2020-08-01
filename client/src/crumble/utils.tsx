@@ -3,6 +3,8 @@
  * @author Connell Reffo
  */
 
+import { Chunk, ChunkEdge } from "./game";
+
 /**
  * Colour of the Canvas Background
  */
@@ -19,9 +21,14 @@ export const CHUNK_GROUND_COLOUR = "#c2c2c2";
 export const CHUNK_EDGE_COLOUR = "#9c9c9c";
 
 /**
+ * Colour of Tile Destruction Particles
+ */
+export const TILE_DESTROY_PARTICLE_COLOUR = "#ff6d57";
+
+/**
  * Nametag Colour for the Client Player
  */
-export const NAMETAG_SELF_COLOUR = "#4ceb34";
+export const NAMETAG_SELF_COLOUR = "#33b862";
 
 /**
  * Nametag Colour for the Opposing Player(s)
@@ -101,6 +108,17 @@ export enum PlayerAnimationStates {
     RUN = "run"
 }
 
+export interface IParticle {
+    pos: Vec2,
+    size: number,
+    maxLifetimeFrames: number, 
+    lifetimeFrames: number,
+    direction: {
+        rise: number,
+        run: number
+    }
+}
+
 /**
  * Represents Object Data of Players Sent from the Socket Server
  */
@@ -175,6 +193,35 @@ export enum Directions {
     DOWN = "down",
     LEFT = "left",
     RIGHT = "right"
+}
+
+/**
+ * Generates Edges on a Given Map
+ * @param chunks The Chunks to Generate Edges for
+ */
+export function generateChunkEdges(chunks: Array<Chunk>): Array<Chunk> {
+    let finalChunks: Array<Chunk> = [];
+
+    chunks.forEach((chunk) => {
+        let isBottom = true;
+
+        for (let chunkKey in chunks) {
+            const CHUNK = chunks[chunkKey];
+
+            if (CHUNK.chunkPos.y === chunk.chunkPos.y + 1 && CHUNK.chunkPos.x === chunk.chunkPos.x) {
+                isBottom = false;
+                break;
+            }
+        }
+
+        if (isBottom) {
+            chunk.chunkEdge = new ChunkEdge(chunk.chunkPos);
+        }
+        
+        finalChunks.push(chunk);
+    });
+
+    return finalChunks;
 }
 
 /**
