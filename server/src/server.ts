@@ -4,7 +4,7 @@
  */
 
 import { Game, activeGames } from "./game";
-import { PORT, MAX_ACTIVE_GAMES, MAX_PLAYERS } from "./utils";
+import { PORT, MAX_ACTIVE_GAMES } from "./utils";
 
 import * as cors from "cors";
 import * as express from "express";
@@ -59,7 +59,7 @@ function getAvailableLobby(): string {
         for (let activeGame in activeGames) {
             let game = activeGames[activeGame];
 
-            if (Object.keys(game.players).length < MAX_PLAYERS) {
+            if (Object.keys(game.players).length < game.maxPlayers) {
                 return game.lobbyId;
             }
         }
@@ -75,7 +75,7 @@ function getAvailableLobby(): string {
 };
 
 /**
- * Hooks a Client up with a Lobby ID
+ * Hooks a Client With a Lobby ID
  */
 ROUTER.post("/api/find-lobby", (req, res) => {
     const LOBBY_ID = getAvailableLobby();

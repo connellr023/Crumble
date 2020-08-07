@@ -4,7 +4,7 @@
  */
 
 import { clientSocketId, connectedPlayers } from "./socket";
-import { Vec2, BG_COLOUR, MIN_LAYER, MAX_LAYER, PLAYER_DIMENSIONS } from "./utils";
+import { Vec2, BG_COLOUR, MIN_LAYER, MAX_LAYER, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE } from "./utils";
 
 import p5 from "p5";
 
@@ -19,9 +19,15 @@ import p5 from "p5";
 export let cameraPos = Vec2.zero;
 
 /**
+ * Position of the Mouse on the Canvas
+ */
+export let mousePos = Vec2.zero;
+
+/**
  * Tracks Assets tp be Used in Game Rendering
  */
 export let assets = {
+    HANDROCKET_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SHADOW: new p5.Image()
 };
@@ -81,19 +87,24 @@ function splitSpritesheet(sheet: p5.Image, spriteWidth: number, spriteHeight: nu
  */
 export function game(p: p5) {
     let playerSpritesheet: p5.Image;
+    let handrocketSpritesheet: p5.Image;
 
     p.preload = () => {
 
         // Load Assets
         playerSpritesheet = p.loadImage(process.env.PUBLIC_URL + "/assets/player.png");
+        handrocketSpritesheet = p.loadImage(process.env.PUBLIC_URL + "/assets/handrocket.png");
 
         assets.PLAYER_SHADOW = p.loadImage(process.env.PUBLIC_URL + "/assets/shadow.png");
     }
 
     p.setup = () => {
 
-        // Split Player Spritesheet Into Frames
+        // Split Player Spritesheet into Frames
         assets.PLAYER_SPRITESHEET = splitSpritesheet(playerSpritesheet, PLAYER_DIMENSIONS.width, PLAYER_DIMENSIONS.height, PLAYER_DIMENSIONS.frames);
+
+        // Split Handrocket Spritesheet into Frames
+        assets.HANDROCKET_SPRITESHEET = splitSpritesheet(handrocketSpritesheet, HANDROCKET_DIMENSIONS.width, HANDROCKET_DIMENSIONS.height, HANDROCKET_DIMENSIONS.frames);
         
         // Initialize Canvas
         const CANV = p.createCanvas(p.windowWidth, p.windowHeight, p.P2D);
@@ -111,9 +122,9 @@ export function game(p: p5) {
     p.draw = () => {
         p.background(BG_COLOUR);
 
-        // Make Camera Follow Player
+        // Make Camera Lock to Player Chunk Pos
         if (!connectedPlayers[clientSocketId].dead) {
-            const LERP_POS = Vec2.lerp(cameraPos, connectedPlayers[clientSocketId].pos, 0.1);
+            const LERP_POS = Vec2.lerp(cameraPos, new Vec2(connectedPlayers[clientSocketId].currentChunk.x * TOTAL_CHUNK_SIZE, connectedPlayers[clientSocketId].currentChunk.y * TOTAL_CHUNK_SIZE), 0.1);
 
             setCameraPos(LERP_POS);
         }
@@ -128,6 +139,9 @@ export function game(p: p5) {
                 }
             });
         }
+
+        // Set Mouse Position
+        mousePos = new Vec2(p.mouseX, p.mouseY);
     }
 
     p.windowResized = () => {

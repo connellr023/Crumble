@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { Vec2, FacingDirections } from "./utils";
+import { Vec2, FacingDirections, HandrocketAngles } from "./utils";
 
 /**
  * Represents a Server Side Instance of a Player
@@ -13,6 +13,7 @@ export class Player {
     public position: Vec2;
     public direction: FacingDirections;
     public dead: boolean;
+    public handrocketAngle: HandrocketAngles;
 
     /**
      * @param name Name of Player
@@ -25,5 +26,6 @@ export class Player {
         this.position = position;
         this.direction = FacingDirections.LEFT;
         this.dead = false;
+        this.handrocketAngle = HandrocketAngles.MIDDLE;
     }
 }

@@ -3,10 +3,12 @@
  * @author Connell Reffo
  */
 
+import { Player } from "./gameobjects";
+
 /**
- * The Maximum Amount of Players that can be in a Single Game
+ * Maximum Length for Player Name
  */
-export const MAX_PLAYERS = 2;
+export const MAX_NAME_LENGTH = 16;
 
 /**
  * The Maximum Amount of Games that can be Concurrently Running
@@ -75,7 +77,17 @@ export enum GameEvents {
     PLAYER_MOVE = "playermove",
     PLAYER_DIED = "playerdied",
     PLAYER_WON = "playerwon",
-    TILE_DESTROYED = "tiledestroyed"
+    TILE_DESTROYED = "tiledestroyed",
+    ANGLE_CHANGE = "anglechange"
+}
+
+/**
+ * Represents Possible Angles the Handrocket Can be Pointed At
+ */
+export enum HandrocketAngles {
+    UP = "up",
+    MIDDLE = "middle",
+    DOWN = "down"
 }
 
 /**
@@ -97,11 +109,26 @@ export enum Directions {
 }
 
 /**
+ * Represents a Connected Player Object
+ */
+export interface IConnectedPlayer {
+    [socketId: string]: Player
+}
+
+/**
  * Represents Data Required for a Crumble Level
  */
 export interface ILevelMap {
     chunks: Array<Vec2>,
     destroyedTiles: Array<Vec2>
+}
+
+/**
+ * Represents Player Angle and Directional Data from a Client
+ */
+export interface IAngleChangeData {
+    angle: HandrocketAngles,
+    direction: FacingDirections
 }
 
 /**

@@ -3,7 +3,12 @@
  * @author Connell Reffo
  */
 
-import { Chunk, ChunkEdge } from "./game";
+import { Chunk, ChunkEdge, Player } from "./game";
+
+/**
+ * Maximum Length for Player Name
+ */
+export const MAX_NAME_LENGTH = 16;
 
 /**
  * Colour of the Canvas Background
@@ -36,14 +41,19 @@ export const NAMETAG_SELF_COLOUR = "#33b862";
 export const NAMETAG_ENEMY_COLOUR = "#f71e42";
 
 /**
- * Vertical Offset of Shadow from the Player
+ * Vertical Offset of Shadow from a Player
  */
 export const PLAYER_SHADOW_OFFSET = 32;
 
 /**
- * Vertical Offset of Nametag from the Player
+ * Vertical Offset of Nametag from a Player
  */
 export const PLAYER_NAMETAG_OFFSET = 53;
+
+/**
+ * Vertical Offset of Held Handrock Weapon for a Player
+ */
+export const PLAYER_HANDROCKET_OFFSET = 22;
 
 /**
  * Lowest Render Layer (Bottom)
@@ -91,6 +101,11 @@ export const SEND_INPUT_MS = 100;
 export const TILE_DESTROY_WARNING_MS = 1500;
 
 /**
+ * The Middleground Between Cursor being Considered Above or Below Player
+ */
+export const CURSOR_MIDDLE_DEADSPACE = 35;
+
+/**
  * Dimensions of Player Sprite
  */
 export const PLAYER_DIMENSIONS = {
@@ -98,16 +113,24 @@ export const PLAYER_DIMENSIONS = {
     width: 5,
     height: 9,
     frames: 8
-}
+};
 
 /**
- * Represents Animation Possible States a Player can be in
+ * Dimensions of a Player's Handrocket
  */
-export enum PlayerAnimationStates {
-    IDLE = "idle",
-    RUN = "run"
-}
+export const HANDROCKET_DIMENSIONS = {
+    scale: 6,
+    width: 11,
+    height: 8,
+    frames: 3,
+    vertOffsetUp: -1,
+    vertOffsetDown: 14,
+    vertOffsetNormal: 8
+};
 
+/**
+ * Data Attributed with an Individual Particle
+ */
 export interface IParticle {
     pos: Vec2,
     size: number,
@@ -120,12 +143,18 @@ export interface IParticle {
 }
 
 /**
+ * Represents a Connected Player Object
+ */
+export interface IConnectedPlayer {
+    [socketId: string]: Player
+}
+
+/**
  * Represents Object Data of Players Sent from the Socket Server
  */
 export interface IPlayerData {
     socketId?: string
     name: string,
-    direction: FacingDirections,
     pos: {
         x: number,
         y: number
@@ -139,6 +168,15 @@ export interface IGameData {
     start: boolean,
     level?: ILevelMap,
     players?: object
+}
+
+/**
+ * Represents Handrocket Angle Change Data from the Server
+ */
+export interface IAngleChangeData {
+    socketId: string,
+    angle: HandrocketAngles,
+    direction: FacingDirections
 }
 
 /**
@@ -174,7 +212,16 @@ export enum GameEvents {
     PLAYER_MOVE = "playermove",
     PLAYER_DIED = "playerdied",
     PLAYER_WON = "playerwon",
-    TILE_DESTROYED = "tiledestroyed"
+    TILE_DESTROYED = "tiledestroyed",
+    ANGLE_CHANGE = "anglechange"
+}
+
+/**
+ * Represents Animation Possible States a Player can be in
+ */
+export enum PlayerAnimationStates {
+    IDLE = "idle",
+    RUN = "run"
 }
 
 /**
@@ -193,6 +240,15 @@ export enum Directions {
     DOWN = "down",
     LEFT = "left",
     RIGHT = "right"
+}
+
+/**
+ * Represents Possible Angles the Handrocket Can be Pointed At
+ */
+export enum HandrocketAngles {
+    UP = "up",
+    MIDDLE = "middle",
+    DOWN = "down"
 }
 
 /**

@@ -4,9 +4,9 @@
  */
 
 import { displayWinner } from "./interface";
-import { initRenderLayers, deleteRenderController } from "./renderer";
-import { startGame, Player, Chunk, TileDestroyParticles } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges } from "./utils";
+import { initRenderLayers, deleteRenderController, mousePos } from "./renderer";
+import { startGame, Player, Chunk, TileDestroyParticles, convertToCameraSpace } from "./game";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -29,40 +29,102 @@ export let loadedChunks: Array<Chunk> = [];
 /**
  * Tracks Players Connected with the Server
  */
-export let connectedPlayers: any = {};
+export let connectedPlayers: { [socketId: string]: Player } = {};
 
 /**
- * Handles Crumble Keyboard Input
+ * Handles Crumble Keyboard and Mouse Input
  * @param socket Socket Connection to Send Input Updates to
  */
-function handleKeyboardInput(socket: SocketIOClient.Socket) {
+function handleInput(socket: SocketIOClient.Socket) {
     let keysPressed: any = {};
+    let mousePressed: any = {};
 
+    // Keyboard Input
     document.addEventListener("keydown", (key) => {
         keysPressed[key.key] = true;
     });
 
     document.addEventListener("keyup", (key) => {
         keysPressed[key.key] = false;
-    })
+    });
+
+    // Mouse Input
+    document.addEventListener("mousedown", (mouse) => {
+        mousePressed[mouse.button] = true;
+    });
+
+    document.addEventListener("mouseup", (mouse) => {
+        mousePressed[mouse.button] = false;
+    });
+
+    // On Mouse Move
+    let lastHandrocketAngle: HandrocketAngles;
+    let lastFacingDir: FacingDirections;
+
+    document.addEventListener("mousemove", () => {
+        const PLAYER_REND_POS = convertToCameraSpace(connectedPlayers[clientSocketId].pos);
+
+        let handrocketAngle: HandrocketAngles;
+        let facingDir: FacingDirections;
+
+        // Determine Angle Based on Mouse Position
+        if (mousePos.y < PLAYER_REND_POS.y - CURSOR_MIDDLE_DEADSPACE) {
+            handrocketAngle = HandrocketAngles.UP;
+        }
+        else if (mousePos.y > PLAYER_REND_POS.y + CURSOR_MIDDLE_DEADSPACE) {
+            handrocketAngle = HandrocketAngles.DOWN;
+        }
+        else {
+            handrocketAngle = HandrocketAngles.MIDDLE;
+        }
+
+        // Determine Facing Direction
+        if (mousePos.x < PLAYER_REND_POS.x) {
+            facingDir = FacingDirections.LEFT;
+        }
+        else {
+            facingDir = FacingDirections.RIGHT;
+        }
+
+        // Send Handrocket Angle to Server
+        if (handrocketAngle !== lastHandrocketAngle || facingDir !== lastFacingDir) {
+            socket.emit(GameEvents.ANGLE_CHANGE, {
+                angle: handrocketAngle,
+                direction: facingDir
+            });
+        }
+
+        lastHandrocketAngle = handrocketAngle;
+        lastFacingDir = facingDir;
+    });
 
     inputUpdateInterval = setInterval(() => {
 
         // Up and Down Movement
         if (keysPressed["w"]) {
             socket.emit(GameEvents.PLAYER_MOVE, Directions.UP);
+            connectedPlayers[socket.id].calcCurrentChunk();
         }
         else if (keysPressed["s"]) {
             socket.emit(GameEvents.PLAYER_MOVE, Directions.DOWN);
+            connectedPlayers[socket.id].calcCurrentChunk();
         }
 
         // Left and Right Movement
         if (keysPressed["a"]) {
             socket.emit(GameEvents.PLAYER_MOVE, Directions.LEFT);
+            connectedPlayers[socket.id].calcCurrentChunk();
         }
         else if (keysPressed["d"]) {
             socket.emit(GameEvents.PLAYER_MOVE, Directions.RIGHT);
+            connectedPlayers[socket.id].calcCurrentChunk();
         }
+
+        // Handrocket Shoot Input
+        if (mousePressed[0]) {
+            console.log("shot");
+        }
+
     }, SEND_INPUT_MS);
 }
 
@@ -113,7 +175,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
             loadedChunks = generateChunkEdges(loadedChunks);
 
             // Start Game
-            handleKeyboardInput(socket);
+            handleInput(socket);
             startGame();
         }
         else {
@@ -126,9 +188,10 @@ export function handleClientSocket(name: string, lobbyId: string) {
     socket.on(SocketEvents.PLAYER_LEAVE, (socketId: string) => {
         console.log(`Player of Socket ID "${socketId}" has Left`);
 
-        deleteRenderController(connectedPlayers[socketId]);
+        deleteRenderController(connectedPlayers[socketId].handrocket);
         deleteRenderController(connectedPlayers[socketId].shadow);
         deleteRenderController(connectedPlayers[socketId].nametag);
+        deleteRenderController(connectedPlayers[socketId]);
 
         delete connectedPlayers[socketId];
     });
@@ -138,9 +201,8 @@ export function handleClientSocket(name: string, lobbyId: string) {
     // Player Move Event
     socket.on(GameEvents.PLAYER_MOVE, (player: IPlayerData) => {
 
-        // Move Player
+        // Set Player Position
         connectedPlayers[player.socketId as string].serverPos = new Vec2(player.pos.x, player.pos.y);
-        connectedPlayers[player.socketId as string].direction = player.direction;
     });
 
     // Player Death Event
@@ -184,5 +246,11 @@ export function handleClientSocket(name: string, lobbyId: string) {
         setTimeout(() => {
             displayWinner(connectedPlayers[socketId].name, clientSocketId === socketId);
         }, 1000);
+    });
+
+    // On Handrocket Angle Change Event
+    socket.on(GameEvents.ANGLE_CHANGE, (res: IAngleChangeData) => {
+        connectedPlayers[res.socketId].setHandrocketAngle(res.angle);
+        connectedPlayers[res.socketId].direction = res.direction;
     });
 }

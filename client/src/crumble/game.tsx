@@ -5,7 +5,7 @@
 
 import {
     Vec2, PlayerAnimationStates, FacingDirections, randomInt,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_GROUND_COLOUR, CHUNK_EDGE_COLOUR, CHUNK_EDGE_HEIGHT, TILE_SIZE, TILE_DESTROY_PARTICLE_COLOUR, IParticle, CHUNK_SIZE
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_GROUND_COLOUR, CHUNK_EDGE_COLOUR, CHUNK_EDGE_HEIGHT, TILE_SIZE, TILE_DESTROY_PARTICLE_COLOUR, IParticle, CHUNK_SIZE, HANDROCKET_DIMENSIONS, HandrocketAngles
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -248,15 +248,19 @@ export class Player extends RenderController {
     public serverPos: Vec2;
     public socketId: string;
 
+    public currentChunk: Vec2;
+    public dead: boolean;
+
+    public handrocket: PlayerHandrocket;
+    public shadow: PlayerShadow;
+    public nametag: Nametag;
+
     private speed: Vec2;
     private calculatingSpeed: boolean;
     private state: PlayerAnimationStates;
     private frame: number;
 
-    private shadow: PlayerShadow;
-    private nametag: Nametag;
-    
-    private dead: boolean;
+    private handrocketVertOffset: number;
 
     private deathFallVelocity: number;
 
@@ -267,36 +271,58 @@ export class Player extends RenderController {
      * @param renderLayer Layer to Render the Player on
      */
     constructor(name: string, pos: Vec2, socketId: string) {
-        super(); {
-            this.name = name;
-            this.pos = pos;
-            this.serverPos = pos;
-            this.socketId = socketId;
-            this.direction = FacingDirections.LEFT;
+        super();
 
-            this.calculatingSpeed = false;
-            this.speed = Vec2.zero;
-            this.state = PlayerAnimationStates.IDLE;
-            this.frame = 0;
+        this.name = name;
+        this.pos = pos;
+        this.serverPos = pos;
+        this.socketId = socketId;
+        this.direction = FacingDirections.LEFT;
+        this.currentChunk = Vec2.zero;
 
-            this.dead = false;
+        this.calculatingSpeed = false;
+        this.speed = Vec2.zero;
+        this.state = PlayerAnimationStates.IDLE;
+        this.frame = 0;
 
-            this.deathFallVelocity = 5;
+        this.dead = false;
 
-            // Set Namtag Colour
-            let nametagColour = NAMETAG_ENEMY_COLOUR;
+        this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;
 
-            if (clientSocketId === this.socketId) {
-                nametagColour = NAMETAG_SELF_COLOUR;
-            }
+        this.deathFallVelocity = 5;
 
-            // Instantiate Other Render Controllers
-            this.shadow = new PlayerShadow(this.pos);
-            this.nametag = new Nametag(this.name, nametagColour, this.pos);
+        // Set Namtag Colour
+        let nametagColour = NAMETAG_ENEMY_COLOUR;
 
-            // Set Render Layer
-            this.setRenderLayer(5);
+        if (clientSocketId === this.socketId) {
+            nametagColour = NAMETAG_SELF_COLOUR;
         }
+
+        // Instantiate Other Render Controllers
+        this.handrocket = new PlayerHandrocket(this.pos);
+        this.shadow = new PlayerShadow(this.pos);
+        this.nametag = new Nametag(this.name, nametagColour, this.pos);
+
+        // Calculate Current Chunk
+        this.calcCurrentChunk();
+
+        // Set Render Layer
+        this.setRenderLayer(5);
+
+    }
+
+    /**
+     * Sets the Angle the the Handrocket Should Point
+     */
+    public setHandrocketAngle(angle: HandrocketAngles) {
+        this.handrocket.setAngle(angle);
+    }
+
+    /**
+     * Returns the Chunk Position of Whatever Chunk the Player is Currently on
+     */
+    public calcCurrentChunk() {
+        this.currentChunk = new Vec2(Math.round(this.pos.x / (TOTAL_CHUNK_SIZE)), Math.round(this.pos.y / (TOTAL_CHUNK_SIZE)));
     }
 
     /**
@@ -339,6 +365,7 @@ export class Player extends RenderController {
         let renderLayer = 1;
         this.dead = true;
 
+        this.handrocket.invisible = true;
         this.shadow.invisible = true;
         this.nametag.invisible = true;
 
@@ -415,21 +442,32 @@ export class Player extends RenderController {
 
                         if (this.frame > 1) {
                             this.frame = 0;
+                            this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;
+                        }
+                        else {
+                            this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetDown;
                         }
                     }
 
                     break;
                 case PlayerAnimationStates.RUN:
                     if (this.frame < 2) {
-                        this.frame = 2;
+                        this.frame = 1;
                     }
 
                     if (REND.frameCount % 10 === 0) {
-                        this.frame++;
-
-                        if (this.frame > PLAYER_DIMENSIONS.frames - 1) {
-                            this.frame = 2;
+                        if (this.frame >= PLAYER_DIMENSIONS.frames - 1) {
+                            this.frame = 1;
+                            this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;
                         }
+                        else if (this.frame === 2 || this.frame === 4 || this.frame === 6) {
+                            this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetUp;
+                        }
+                        else {
+                            this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;
+                        }
+
+                        this.frame++;
                     }
 
                     break;
@@ -440,11 +478,108 @@ export class Player extends RenderController {
             this.state = PlayerAnimationStates.IDLE
         }
 
+        // Set Held Handrocket Position
+        this.handrocket.pos = new Vec2(this.pos.x, this.pos.y + this.handrocketVertOffset);
+        this.handrocket.direction = this.direction;
+
         // Set Shadow Position
         this.shadow.pos = new Vec2(this.pos.x, this.pos.y + PLAYER_SHADOW_OFFSET);
 
         // Set Nametag Position
         this.nametag.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_NAMETAG_OFFSET);
+    }
+}
+
+/**
+ * Player Held Handrocket Renderer
+ */
+class PlayerHandrocket extends RenderController {
+    public pos: Vec2;
+    public direction: FacingDirections;
+
+    private spriteFrame: number;
+
+    /**
+     * @param pos Position to Render Handrocket at
+     */
+    constructor(pos: Vec2) {
+        super();
+
+        this.pos = pos;
+        this.direction = FacingDirections.LEFT;
+
+        this.spriteFrame = 0;
+
+        this.setRenderLayer(6);
+    }
+
+    /**
+     * Sets the Angle Sprite
+     */
+    public setAngle(angle: HandrocketAngles) {
+        switch (angle) {
+            case HandrocketAngles.UP:
+                this.spriteFrame = 2;
+                break;
+            
+            case HandrocketAngles.MIDDLE:
+                this.spriteFrame = 0;
+                break;
+            
+            case HandrocketAngles.DOWN:
+                this.spriteFrame = 1;
+                break;
+        }
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        const REND_POS = convertToCameraSpace(this.pos);
+
+        let directionHorizontalOffset: number;
+        let angleVertOffset: number;
+
+        REND.push();
+
+        // Check Direction
+        switch(this.direction) {
+            case FacingDirections.LEFT:
+                const HORIZONTAL_OFFSET = 5;
+                
+                REND.translate(REND_POS.x - cameraPos.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + HANDROCKET_DIMENSIONS.width, 0);
+                REND.scale(-1, 1);
+
+                directionHorizontalOffset = 32;
+                break;
+            
+            case FacingDirections.RIGHT:
+                REND.scale(1, 1);
+                
+                directionHorizontalOffset = 29;
+                break;
+        }
+
+        // Adjust Vertical Offset Based on Angle
+        switch (this.spriteFrame) {
+            case 1:
+                angleVertOffset = 5;
+                break;
+
+            case 2:
+                angleVertOffset = -15;
+                break;
+
+            default:
+                angleVertOffset = 0;
+                break;
+        }
+
+        // Render Hand Rocket
+        REND.imageMode(REND.CENTER);
+        REND.image(assets.HANDROCKET_SPRITESHEET[this.spriteFrame], REND_POS.x + directionHorizontalOffset, REND_POS.y + angleVertOffset, HANDROCKET_DIMENSIONS.width * HANDROCKET_DIMENSIONS.scale, HANDROCKET_DIMENSIONS.height * HANDROCKET_DIMENSIONS.scale);
+        
+        REND.pop();
     }
 }
 
@@ -501,7 +636,7 @@ class Nametag extends RenderController {
         this.colour = colour;
         this.pos = pos;
 
-        this.setRenderLayer(6);
+        this.setRenderLayer(7);
     }
 
     public render() {

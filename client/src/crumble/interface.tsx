@@ -4,7 +4,7 @@
  */
 
 import { handleClientSocket } from "./socket";
-import { NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR } from "./utils";
+import { NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, MAX_NAME_LENGTH } from "./utils";
 
 import $ from "jquery";
 
@@ -33,17 +33,16 @@ export function displayClientMsg(message: string) {
  * Asks the Crumble Server for an Available Lobby ID
  */
 export function connectToLobby() {
-    const name = $("#name-input").val() as string;
+    const NAME = $("#name-input").val()?.toString().trim() as string;
 
-    const maxNameLength = 16;
-
+    // Check if Already Entered Queue
     if (!enteredQueue) {
 
         // Check if Name is Too Long
-        if (name.length > maxNameLength) {
-            displayClientMsg(`Player Name Must be Under ${maxNameLength} Characters`);
+        if (NAME.length > MAX_NAME_LENGTH) {
+            displayClientMsg(`Player Name Must be Under ${MAX_NAME_LENGTH} Characters`);
         }
-        else if (name.length === 0) {
+        else if (NAME.length === 0) {
             displayClientMsg("Player Name Must be Greater than 0 Characters");
         }
         else {
@@ -55,7 +54,7 @@ export function connectToLobby() {
                 dataType: "json",
                 success: (res) => {
                     if (res.lobby != null) {
-                        handleClientSocket(name, res.lobby as string);
+                        handleClientSocket(NAME, res.lobby as string);
                         setEnteredQueue(true);
                     }
                     else {

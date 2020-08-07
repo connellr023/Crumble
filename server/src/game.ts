@@ -5,7 +5,7 @@
 
 import { IO } from "./server";
 import { Player } from "./gameobjects";
-import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, MAX_PLAYERS, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE } from "./utils";
+import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -19,15 +19,17 @@ export let activeGames: Array<Game> = [];
  */
 export class Game {
     public lobbyId: string;
-    public players: object = {};
-    public namespace: socketIo.Namespace;
+    public players: IConnectedPlayer = {};
+    public maxPlayers = 2;
+
+    private namespace: socketIo.Namespace;
 
     private loadedMap: ILevelMap;
     private ticker: NodeJS.Timeout;
     private ticks: number = 0;
 
     private availableTiles: Array<Vec2> = [];
-    private destroyedTiles: Array<Vec2> = [];
+    private destroyedTiles: Array<Vec2> = []; 
 
     constructor() {
 
@@ -264,7 +266,7 @@ export class Game {
                 const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
 
                 const TILE_HITBOX_DIMENSIONS = {
-                    width: 11,
+                    width: 13,
                     height: 14,
                     vertOffset: 7
                 }
@@ -339,6 +341,11 @@ export class Game {
 
             // Socket Player Register Event
             socket.on(SocketEvents.REGISTER, (name: string) => {
+
+                // Make Sure Name is Not too Long
+                name = name.trim().substr(0, MAX_NAME_LENGTH);
+
+                // Add Player
                 this.addPlayer(name, socket.id);
                 console.log(`[+] Added Player "${name}" to "${this.namespace.name}"`);
 
@@ -346,7 +353,7 @@ export class Game {
                 socket.emit(SocketEvents.SEND_ID, socket.id);
 
                 // Verify if Game Should Start
-                const START_GAME = (Object.keys(this.players).length === MAX_PLAYERS);
+                const START_GAME = (Object.keys(this.players).length === this.maxPlayers);
 
                 if (START_GAME) {
                     this.initPlayerSpawns();
@@ -436,7 +443,6 @@ export class Game {
                             // Sync Player Position with all Clients
                             this.namespace.emit(GameEvents.PLAYER_MOVE, {
                                 socketId: socket.id,
-                                direction: this.players[socket.id].direction,
                                 pos: {
                                     x: this.players[socket.id].position.x,
                                     y: this.players[socket.id].position.y
@@ -461,6 +467,18 @@ export class Game {
                             }
                         }
                     });
+                });
+            });
+
+            // Player Handrocket Angle Change Event
+            socket.on(GameEvents.ANGLE_CHANGE, (res: IAngleChangeData) => {
+                this.players[socket.id].handrocketAngle = res.angle;
+                this.players[socket.id].direction = res.direction;
+
+                this.namespace.emit(GameEvents.ANGLE_CHANGE, {
+                    socketId: socket.id,
+                    angle: res.angle,
+                    direction: res.direction
                 });
             });
         });
