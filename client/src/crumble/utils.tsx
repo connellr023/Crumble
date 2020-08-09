@@ -31,6 +31,11 @@ export const CHUNK_EDGE_COLOUR = "#9c9c9c";
 export const TILE_DESTROY_PARTICLE_COLOUR = "#ff6d57";
 
 /**
+ * Colour of Muzzle Blast Particles
+ */
+export const MUZZLE_BLAST_PARTICLE_COLOUR = "#d95050";
+
+/**
  * Nametag Colour for the Client Player
  */
 export const NAMETAG_SELF_COLOUR = "#33b862";
@@ -99,6 +104,11 @@ export const SEND_INPUT_MS = 100;
  * Warning Time Before a Tile Destroys
  */
 export const TILE_DESTROY_WARNING_MS = 1500;
+
+/**
+ * Cooldown Time Between Rockets being Fires by the Current Player
+ */
+export const SHOOT_COOLDOWN_MS = 1300;
 
 /**
  * The Middleground Between Cursor being Considered Above or Below Player
@@ -213,7 +223,8 @@ export enum GameEvents {
     PLAYER_DIED = "playerdied",
     PLAYER_WON = "playerwon",
     TILE_DESTROYED = "tiledestroyed",
-    ANGLE_CHANGE = "anglechange"
+    ANGLE_CHANGE = "anglechange",
+    ROCKET_SHOT = "rocketshot"
 }
 
 /**

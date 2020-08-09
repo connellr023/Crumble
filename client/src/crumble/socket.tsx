@@ -6,7 +6,7 @@
 import { displayWinner } from "./interface";
 import { initRenderLayers, deleteRenderController, mousePos } from "./renderer";
 import { startGame, Player, Chunk, TileDestroyParticles, convertToCameraSpace } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections } from "./utils";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS } from "./utils";
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -60,6 +60,8 @@ function handleInput(socket: SocketIOClient.Socket) {
     // On Mouse Move
     let lastHandrocketAngle: HandrocketAngles;
     let lastFacingDir: FacingDirections;
+
+    let canShoot = true;
 
     document.addEventListener("mousemove", () => {
         const PLAYER_REND_POS = convertToCameraSpace(connectedPlayers[clientSocketId].pos);
@@ -122,7 +124,18 @@ function handleInput(socket: SocketIOClient.Socket) {
 
         // Handrocket Shoot Input
         if (mousePressed[0]) {
-            console.log("shot");
+            if (canShoot) {
+                canShoot = false;
+                socket.emit(GameEvents.ROCKET_SHOT);
+
+                // Create Muzzle Blast Particles
+                connectedPlayers[socket.id].createMuzzleBlast();
+
+                // Client Side Shoot Cooldown
+                setTimeout(() => {
+                    canShoot = true;
+                }, SHOOT_COOLDOWN_MS);
+            }
         }
 
     }, SEND_INPUT_MS);

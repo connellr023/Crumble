@@ -5,7 +5,7 @@
 
 import {
     Vec2, PlayerAnimationStates, FacingDirections, randomInt,
-    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_GROUND_COLOUR, CHUNK_EDGE_COLOUR, CHUNK_EDGE_HEIGHT, TILE_SIZE, TILE_DESTROY_PARTICLE_COLOUR, IParticle, CHUNK_SIZE, HANDROCKET_DIMENSIONS, HandrocketAngles
+    PLAYER_NAMETAG_OFFSET, PLAYER_SHADOW_OFFSET, PLAYER_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_GROUND_COLOUR, CHUNK_EDGE_COLOUR, CHUNK_EDGE_HEIGHT, TILE_SIZE, TILE_DESTROY_PARTICLE_COLOUR, IParticle, CHUNK_SIZE, HANDROCKET_DIMENSIONS, HandrocketAngles, MUZZLE_BLAST_PARTICLE_COLOUR
 } from "./utils";
 
 import { clientSocketId, inputUpdateInterval } from "./socket";
@@ -13,6 +13,7 @@ import { game, assets, RenderController, cameraPos, deleteRenderController } fro
 
 import $ from "jquery";
 import p5 from "p5";
+import { off } from "process";
 
 /**
  * Current Instance of P5 Renderer
@@ -152,9 +153,13 @@ export class ChunkEdge extends RenderController {
 export class TileDestroyParticles extends RenderController {
     public tilePos: Vec2;
     public stopParticles: boolean;
-
+    
     private particles: Array<IParticle> = [];
+    private particleCount: number = 12;
     private particleSpeedMultiplier: number;
+    
+    private maxParticleSize: number = 12;
+    private minParticleSize: number = 8;
 
     /**
      * @param tilePos Position of Destroyed Tile
@@ -174,12 +179,11 @@ export class TileDestroyParticles extends RenderController {
      * Initializes Tile Destroy Particles
      */
     private initParticles() {
-        const PARTICLE_COUNT = 13;
 
-        for (let pc = 0; pc < PARTICLE_COUNT; pc++) {
+        for (let pc = 0; pc < this.particleCount; pc++) {
             this.particles.push({
                 pos: this.tilePos,
-                size: randomInt(8, 12),
+                size: randomInt(this.minParticleSize, this.maxParticleSize),
                 maxLifetimeFrames: randomInt(30, 80),
                 lifetimeFrames: 0,
                 direction: {
@@ -235,6 +239,80 @@ export class TileDestroyParticles extends RenderController {
         if (this.particles.length === 0) {
             deleteRenderController(this);
         }
+    }
+}
+
+/**
+ * Handrocket Initial Shot Blast Particles
+ */
+class MuzzleBlastParticles extends RenderController {
+    public pos: Vec2;
+
+    private particles: Array<IParticle> = [];
+    private particleCount: number = 10;
+
+    private minParticleSize: number = 7;
+    private maxParticleSize: number = 12;
+
+    /**
+     * @param pos Position to Create Particles At
+     */
+    constructor(pos: Vec2) {
+        super();
+
+        this.pos = pos;
+
+        this.setRenderLayer(7);
+        this.initParticles();
+    }
+
+    /**
+     * Initializes Particles Array
+     */
+    private initParticles() {
+        for (let pc = 0; pc < this.particleCount; pc++) {
+            this.particles.push({
+                pos: this.pos,
+                size: randomInt(this.minParticleSize, this.maxParticleSize),
+                maxLifetimeFrames: randomInt(20, 35), 
+                lifetimeFrames: 0,
+                direction: {
+                    rise: randomInt(-300, 300) / 8,
+                    run: randomInt(-300, 300) / 8
+                }
+            });
+        }
+    }
+
+    public render() {
+        const REND = gameInstance;
+
+        // Render Particles
+        this.particles.forEach((particle) => {
+            const REND_POS = convertToCameraSpace(particle.pos);
+
+            REND.noStroke();
+            REND.fill(MUZZLE_BLAST_PARTICLE_COLOUR);
+            REND.rectMode(REND.CENTER);
+            REND.rect(REND_POS.x + (particle.direction.run * 0.4), REND_POS.y + (particle.direction.rise * 0.4), particle.size, particle.size);
+
+            if (particle.lifetimeFrames >= particle.maxLifetimeFrames && this.particles.length > 0) {
+                this.particles = this.particles.filter((part) => {
+                    return part !== particle;
+                });
+            }
+            else if (particle.lifetimeFrames >= particle.maxLifetimeFrames - particle.size) {
+                particle.size--;
+            }
+            else if (this.particles.length === 0) {
+
+                // Destroy Instance when All Particles are Gone
+                deleteRenderController(this);
+            }
+
+            particle.pos = new Vec2(particle.pos.x + (particle.direction.run * 0.02), particle.pos.y + (particle.direction.rise * 0.02));
+            particle.lifetimeFrames++;
+        });
     }
 }
 
@@ -385,6 +463,39 @@ export class Player extends RenderController {
         }, 15);
     }
 
+    /**
+     * Instantiates Muzzle Blast Particles at the Position of the Handrocket Muzzle
+     */
+    public createMuzzleBlast() {
+
+        // Set Direction
+        let direction = -1;
+
+        if (this.direction === FacingDirections.RIGHT) {
+            direction = 1;
+        }
+
+        // Set Offset Values
+        let offset = Vec2.zero;  
+
+        switch(this.handrocket.angle) {
+            case HandrocketAngles.UP:
+                offset = new Vec2(30 * direction, -15);
+                break;
+
+            case HandrocketAngles.MIDDLE:
+                offset = new Vec2(50 * direction, -10);
+                break;
+
+            case HandrocketAngles.DOWN:
+                offset = new Vec2(35 * direction, 12);
+                break;
+        }
+
+        // Create Muzzle Blast Instance
+        new MuzzleBlastParticles(new Vec2(this.handrocket.pos.x + offset.x, this.handrocket.pos.y + offset.y));
+    }
+
     public render() {
         const REND = gameInstance;
 
@@ -496,6 +607,7 @@ export class Player extends RenderController {
 class PlayerHandrocket extends RenderController {
     public pos: Vec2;
     public direction: FacingDirections;
+    public angle: HandrocketAngles;
 
     private spriteFrame: number;
 
@@ -507,6 +619,7 @@ class PlayerHandrocket extends RenderController {
 
         this.pos = pos;
         this.direction = FacingDirections.LEFT;
+        this.angle = HandrocketAngles.MIDDLE;
 
         this.spriteFrame = 0;
 
@@ -517,7 +630,9 @@ class PlayerHandrocket extends RenderController {
      * Sets the Angle Sprite
      */
     public setAngle(angle: HandrocketAngles) {
-        switch (angle) {
+        this.angle = angle;
+
+        switch (this.angle) {
             case HandrocketAngles.UP:
                 this.spriteFrame = 2;
                 break;

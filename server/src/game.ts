@@ -5,7 +5,7 @@
 
 import { IO } from "./server";
 import { Player } from "./gameobjects";
-import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH } from "./utils";
+import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, SHOOT_COOLDOWN_MS, IPlayerObstructionData, HandrocketAngles, HANDROCKET_KNOCKBACK_FORCE } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -73,7 +73,7 @@ export class Game {
 
                 const PLAYER_KEY = Object.keys(this.players)[chunkKey];
 
-                this.players[PLAYER_KEY].position = SPAWN_POS;
+                this.players[PLAYER_KEY].pos = SPAWN_POS;
             }
             else {
                 break;
@@ -129,30 +129,6 @@ export class Game {
     }
 
     /**
-     * Updates a Connected Player With new Data Based on their Movement Input
-     * @param socketId The Socket ID of the Player to Update
-     * @param movementDir The Direction of the Player's Movement
-     */
-    private processInputUpdate(socketId: string, movementDir: Directions) {
-        switch (movementDir) {
-            case Directions.UP:
-                this.players[socketId].position = new Vec2(this.players[socketId].position.x, this.players[socketId].position.y - PLAYER_SPEED);
-                break;
-            case Directions.DOWN:
-                this.players[socketId].position = new Vec2(this.players[socketId].position.x, this.players[socketId].position.y + PLAYER_SPEED);
-                break;
-            case Directions.LEFT:
-                this.players[socketId].position = new Vec2(this.players[socketId].position.x - PLAYER_SPEED, this.players[socketId].position.y);
-                this.players[socketId].direction = FacingDirections.LEFT;
-                break;
-            case Directions.RIGHT:
-                this.players[socketId].position = new Vec2(this.players[socketId].position.x + PLAYER_SPEED, this.players[socketId].position.y);
-                this.players[socketId].direction = FacingDirections.RIGHT;
-                break;
-        }
-    }
-
-    /**
      * Handles Collisions Bewteen Players Asynchronously
      * @param colliderSocketId The Socket ID that Initiated the Collision
      * @param movementDir Direction the Player was Moving
@@ -167,14 +143,14 @@ export class Game {
 
                     // Current Player
                     const COLLIDER_1 = new Collider(
-                        this.players[colliderSocketId].position as Vec2,
+                        this.players[colliderSocketId].pos as Vec2,
                         PLAYER_DIMENSIONS.width,
                         PLAYER_DIMENSIONS.height
                     );
 
                     // Opponent Player
                     const COLLIDER_2 = new Collider(
-                        this.players[socketId].position as Vec2,
+                        this.players[socketId].pos as Vec2,
                         PLAYER_DIMENSIONS.width,
                         PLAYER_DIMENSIONS.height
                     );
@@ -218,7 +194,7 @@ export class Game {
      */
     private async playerWithinMap(socketId: string): Promise<{fellOffFront: boolean, withinMap: boolean}> {
         return new Promise((resolve) => {
-            const PLAYER_POS = this.players[socketId].position as Vec2;
+            const PLAYER_POS = this.players[socketId].pos as Vec2;
                 
             let playerHitboxVertOffset = 50;
             let withinMap = false;
@@ -305,6 +281,80 @@ export class Game {
     }
 
     /**
+     * Returns Level Obstruction Data
+     * @param socketId The Socket ID of the Player to Check
+     * @param movementDir The Direction to Check
+     */
+    private playerObstructed(socketId: string, movementDir: Directions): Promise<IPlayerObstructionData> {
+
+        // Return Promise
+        return new Promise((resolve) => {
+
+            // Check for Player Collisions
+            const PLAYER_COLLISION_DIR = this.processPlayerCollisions(socketId, movementDir);
+
+            // Check if Player is Within the Map Boundries
+            const PLAYER_WITHIN_MAP = this.playerWithinMap(socketId);
+
+            // Process Promise Results
+            PLAYER_COLLISION_DIR.then((playerCollisionDir) => {
+                PLAYER_WITHIN_MAP.then((playerBoundryData) => {
+
+                    // Return Data
+                    resolve({
+                        withinMap: playerBoundryData.withinMap,
+                        fellOffFront: playerBoundryData.fellOffFront,
+                        playerCollisionDir: playerCollisionDir
+                    });
+                });
+            });
+        });
+    }
+
+    /**
+     * Syncs a Given Player's Position with All Clients
+     * @param socketId The Socket ID of the Player to Sync
+     * @param movementDir The Direction the Player will Move in
+     * @param movementFunc Callback that Moves the Player in Any Way on the Server Side
+     */
+    private syncPlayerPositions(socketId: string, movementDir: Directions, movementFunc?: () => void) {
+
+        // Generate Obstruction Data
+        this.playerObstructed(socketId, movementDir).then((obstructionData: IPlayerObstructionData) => {
+
+            // Move Player on the Server Side
+            if (movementDir !== obstructionData.playerCollisionDir && obstructionData.withinMap) {
+
+                // Update Player Positon and Facing Direction based on Client Movement Input
+                movementFunc();
+                
+                // Sync Player Position with all Clients
+                this.namespace.emit(GameEvents.PLAYER_MOVE, {
+                    socketId: socketId,
+                    pos: this.players[socketId].pos
+                });
+            }
+            else if (!obstructionData.withinMap) {
+
+                // Tell Clients that this Player is Dead
+                this.players[socketId].dead = true;
+                this.namespace.emit(GameEvents.PLAYER_DIED, {
+                    socketId: socketId,
+                    fellOffFront: obstructionData.fellOffFront
+                });
+
+                // Check if Game is Over
+                const ALIVE_PLAYERS = this.getAlivePlayersSocketId();
+
+                if (ALIVE_PLAYERS.length === 1) {
+                    this.namespace.emit(GameEvents.PLAYER_WON, ALIVE_PLAYERS[0]);
+                    this.closeLobby();
+                }
+            }
+        });
+    }
+
+    /**
      * Destroys a Tile at a Given Position
      * @param tilePos Position of Tile to Destroy
      */
@@ -368,8 +418,8 @@ export class Game {
                         playersObject[socketId] = {
                             name: PLAYER.name,
                             pos: {
-                                x: PLAYER.position.x,
-                                y: PLAYER.position.y
+                                x: PLAYER.pos.x,
+                                y: PLAYER.pos.y
                             },
                             direction: PLAYER.direction
                         };
@@ -419,54 +469,8 @@ export class Game {
 
             // Player Movement Event
             socket.on(GameEvents.PLAYER_MOVE, (movementDir: Directions) => {
-                
-                // Check for Player Collisions
-                const PLAYER_COLLISION_DIR = this.processPlayerCollisions(socket.id, movementDir);
-
-                // Check if Player is Within the Map Boundries
-                const PLAYER_WITHIN_MAP = this.playerWithinMap(socket.id);
-
-                // Process Promise Results
-                PLAYER_COLLISION_DIR.then((playerCollisionDir) => {
-                    PLAYER_WITHIN_MAP.then((playerBoundryData) => {
-
-                        // Parse Boundry Data into Constants
-                        const WITHIN_MAP = playerBoundryData.withinMap;
-                        const FELL_OFF_FRONT = playerBoundryData.fellOffFront;
-
-                        // Move Player on the Server Side
-                        if (movementDir !== playerCollisionDir && WITHIN_MAP) {
-
-                            // Update Player Positon and Facing Direction based on Client Movement Input
-                            this.processInputUpdate(socket.id, movementDir);
-                            
-                            // Sync Player Position with all Clients
-                            this.namespace.emit(GameEvents.PLAYER_MOVE, {
-                                socketId: socket.id,
-                                pos: {
-                                    x: this.players[socket.id].position.x,
-                                    y: this.players[socket.id].position.y
-                                }
-                            });
-                        }
-                        else if (!WITHIN_MAP) {
-
-                            // Tell Clients that this Player is Dead
-                            this.players[socket.id].dead = true;
-                            this.namespace.emit(GameEvents.PLAYER_DIED, {
-                                socketId: socket.id,
-                                fellOffFront: FELL_OFF_FRONT
-                            });
-
-                            // Check if Game is Over
-                            const ALIVE_PLAYERS = this.getAlivePlayersSocketId();
-
-                            if (ALIVE_PLAYERS.length === 1) {
-                                this.namespace.emit(GameEvents.PLAYER_WON, ALIVE_PLAYERS[0]);
-                                this.closeLobby();
-                            }
-                        }
-                    });
+                this.syncPlayerPositions(socket.id, movementDir, () => {
+                    this.players[socket.id].move(movementDir);
                 });
             });
 
@@ -480,6 +484,82 @@ export class Game {
                     angle: res.angle,
                     direction: res.direction
                 });
+            });
+
+            // Rocket Shoot Event
+            socket.on(GameEvents.ROCKET_SHOT, () => {
+                if (this.players[socket.id].canShoot) {
+                    this.players[socket.id].canShoot = false;
+
+                    let horKnockbackDir: Directions;
+                    let vertKnockbackDir: Directions;
+
+                    let knockbackVector = Vec2.zero;
+
+                    // Set Horizontal Player Knockback
+                    switch(this.players[socket.id].direction) {
+                        case FacingDirections.LEFT:
+                            knockbackVector.x = 1;
+                            horKnockbackDir = Directions.RIGHT;
+
+                            break;
+                        
+                        case FacingDirections.RIGHT:
+                            knockbackVector.x = -1;
+                            horKnockbackDir = Directions.LEFT;
+
+                            break;
+                    }
+
+                    // Set Vertical Player Knockback
+                    switch(this.players[socket.id].handrocketAngle) {
+                        case HandrocketAngles.UP:
+                            knockbackVector.y = 1;
+                            vertKnockbackDir = Directions.DOWN;
+
+                            break;
+                        
+                        case HandrocketAngles.DOWN:
+                            knockbackVector.y = -1;
+                            vertKnockbackDir = Directions.UP;
+
+                            break;
+
+                        default:
+                            knockbackVector.y = 0;
+                            vertKnockbackDir = null;
+
+                            break;
+                    }
+
+                    // Apply Knockback if Not Colliding
+                    this.syncPlayerPositions(socket.id, horKnockbackDir, () => {
+                        const CALLBACK = () => {
+                            this.players[socket.id].knockback(HANDROCKET_KNOCKBACK_FORCE, knockbackVector);
+
+                            // Check if Player Boosted off of the Map
+                            setTimeout(() => {
+                                this.syncPlayerPositions(socket.id, horKnockbackDir);
+                            }, 25);
+                        }
+
+                        if (vertKnockbackDir != null) {
+
+                            // Check for Vertical Collisions
+                            this.syncPlayerPositions(socket.id, vertKnockbackDir, () => {
+                                CALLBACK();
+                            });
+                        }
+                        else {
+                            CALLBACK();
+                        }
+                    });
+
+                    // Server Side Shoot Cooldown
+                    setTimeout(() => {
+                        this.players[socket.id].canShoot = true;
+                    }, SHOOT_COOLDOWN_MS);
+                }
             });
         });
     }

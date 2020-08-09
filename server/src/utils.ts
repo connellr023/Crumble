@@ -36,6 +36,11 @@ export const TOTAL_CHUNK_SIZE = 230;
 export const TILE_DESTROY_WARNING_MS = 1500;
 
 /**
+ * Cooldown Time Between Rockets being Fires by a Single Player
+ */
+export const SHOOT_COOLDOWN_MS = 1300;
+
+/**
  * Amount of Ticks Between Tile Destruction
  */
 export const DESTROY_TILE_TICKS = 130;
@@ -44,6 +49,11 @@ export const DESTROY_TILE_TICKS = 130;
  * How Often Code in the Game Tick Function is Called
  */
 export const TICK_MS = 100;
+
+/**
+ * Force of Knockback from Handrocket Shot
+ */
+export const HANDROCKET_KNOCKBACK_FORCE = 3;
 
 /**
  * Port that the Main Crumble Server will Run on
@@ -78,7 +88,8 @@ export enum GameEvents {
     PLAYER_DIED = "playerdied",
     PLAYER_WON = "playerwon",
     TILE_DESTROYED = "tiledestroyed",
-    ANGLE_CHANGE = "anglechange"
+    ANGLE_CHANGE = "anglechange",
+    ROCKET_SHOT = "rocketshot"
 }
 
 /**
@@ -113,6 +124,15 @@ export enum Directions {
  */
 export interface IConnectedPlayer {
     [socketId: string]: Player
+}
+
+/**
+ * Represents Obstruction Data Used to Determine Where a Player Can Move
+ */
+export interface IPlayerObstructionData {
+    withinMap: boolean,
+    fellOffFront: boolean,
+    playerCollisionDir: Directions
 }
 
 /**
