@@ -4,14 +4,10 @@
  */
 
 import { clientSocketId, connectedPlayers } from "./socket";
-import { Vec2, BG_COLOUR, MIN_LAYER, MAX_LAYER, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE } from "./utils";
+import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH } from "./utils";
 
+import RenderController from "./renderers/controller";
 import p5 from "p5";
-
-/**
- * Tracks Render Controllers in Render Layers
- */
- let renderLayers: any = {};
 
 /**
  * Position of the Crumble Camera
@@ -38,29 +34,6 @@ export let assets = {
  */
 export function setCameraPos(pos: Vec2) {
     cameraPos = pos;
-}
-
-/**
- * Initializes Render Layer Object
- */
-export function initRenderLayers() {
-    for (let layer = MIN_LAYER; layer < MAX_LAYER; layer++) {
-        renderLayers[layer.toString()] = [];
-    }
-}
-
-/**
- * Deletes a Render Controller from the Render Layers Variable
- * @param renderer Render Controller to Delete
- */
-export function deleteRenderController(renderer: RenderController) {
-    for (let layer in renderLayers) {
-        for (let renderController in renderLayers[layer]) {
-            if (renderLayers[layer][renderController] === renderer) {
-                delete renderLayers[layer][renderController];
-            }
-        }
-    }
 }
 
 /**
@@ -92,10 +65,10 @@ export function game(p: p5) {
     p.preload = () => {
 
         // Load Assets
-        playerSpritesheet = p.loadImage(process.env.PUBLIC_URL + "/assets/player.png");
-        handrocketSpritesheet = p.loadImage(process.env.PUBLIC_URL + "/assets/handrocket.png");
+        playerSpritesheet = p.loadImage(GRAPHICS_PATH + "player.png");
+        handrocketSpritesheet = p.loadImage(GRAPHICS_PATH + "handrocket.png");
 
-        assets.PLAYER_SHADOW = p.loadImage(process.env.PUBLIC_URL + "/assets/shadow.png");
+        assets.PLAYER_SHADOW = p.loadImage(GRAPHICS_PATH + "shadow.png");
     }
 
     p.setup = () => {
@@ -129,16 +102,8 @@ export function game(p: p5) {
             setCameraPos(LERP_POS);
         }
 
-        // Render all Render Controllers
-        for (let layer in renderLayers) {
-            const CONTROLLERS = renderLayers[layer] as Array<RenderController>;
-
-            CONTROLLERS.forEach((renderController) => {
-                if (!renderController.invisible) {
-                    renderController.render();
-                }
-            });
-        }
+        // Render All Render Controllers
+        RenderController.renderAllControllers();
 
         // Set Mouse Position
         mousePos = new Vec2(p.mouseX, p.mouseY);
@@ -149,29 +114,4 @@ export function game(p: p5) {
         // Constantly Scale Canvas to Screen Size
         p.resizeCanvas(p.windowWidth, p.windowHeight);
     }
-}
-
-export class RenderController {
-    public renderLayer: number = 0;
-    public invisible: boolean = false;
-
-    /**
-     * Sets the Render Layer of the Render Controller
-     * @param layer Render Layer to Set to
-     */
-    public setRenderLayer(layer: number) {
-        renderLayers[this.renderLayer.toString()].forEach((renderer: RenderController, index: number) => {
-            if (renderer === this) {
-                delete renderLayers[this.renderLayer.toString()][index];
-            }
-        });
-
-        this.renderLayer = layer;
-        renderLayers[this.renderLayer.toString()].push(this);
-    }
-
-    /**
-     * Executes Every Frame
-     */
-    public render() {}
 }

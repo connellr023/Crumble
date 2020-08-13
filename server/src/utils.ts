@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { Player } from "./gameobjects";
+import { Player, RocketProjectile } from "./gameobjects";
 
 /**
  * Maximum Length for Player Name
@@ -16,9 +16,19 @@ export const MAX_NAME_LENGTH = 16;
 export const MAX_ACTIVE_GAMES = 5;
 
 /**
+ * The Maximum Value for a Rocket's Lifetime Variable before Self Destruction
+ */
+export const MAX_ROCKET_LIFETIME = 20;
+
+/**
  * Movement Speed of Players
  */
 export const PLAYER_SPEED = 10;
+
+/**
+ * Speed of a Rocket Projectile
+ */
+export const ROCKET_SPEED = 20;
 
 /**
  * Size of a Chunk in Tiles
@@ -44,6 +54,11 @@ export const SHOOT_COOLDOWN_MS = 1300;
  * Amount of Ticks Between Tile Destruction
  */
 export const DESTROY_TILE_TICKS = 130;
+
+/**
+ * Amount of Ticks Between Rocket Projectile Position Updates
+ */
+export const ROCKET_UPDATE_TICKS = 1;
 
 /**
  * How Often Code in the Game Tick Function is Called
@@ -89,7 +104,8 @@ export enum GameEvents {
     PLAYER_WON = "playerwon",
     TILE_DESTROYED = "tiledestroyed",
     ANGLE_CHANGE = "anglechange",
-    ROCKET_SHOT = "rocketshot"
+    ROCKET_SHOT = "rocketshot",
+    ROCKET_EXPLODE = "rocketexplode"
 }
 
 /**
@@ -124,6 +140,13 @@ export enum Directions {
  */
 export interface IConnectedPlayer {
     [socketId: string]: Player
+}
+
+/**
+ * Represents a Rocket Projectile Object
+ */
+export interface IProjectile {
+    [instanceId: string]: RocketProjectile
 }
 
 /**

@@ -4,8 +4,8 @@
  */
 
 import { IO } from "./server";
-import { Player } from "./gameobjects";
-import { Vec2, ILevelMap, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_SPEED, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, SHOOT_COOLDOWN_MS, IPlayerObstructionData, HandrocketAngles, HANDROCKET_KNOCKBACK_FORCE } from "./utils";
+import { Player, RocketProjectile } from "./gameobjects";
+import { Vec2, ILevelMap, IProjectile, randomInt, Collider, GameEvents, SocketEvents, Directions, FacingDirections, PLAYER_DIMENSIONS, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, SHOOT_COOLDOWN_MS, IPlayerObstructionData, HandrocketAngles, HANDROCKET_KNOCKBACK_FORCE, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME } from "./utils";
 
 import * as socketIo from "socket.io";
 
@@ -19,8 +19,10 @@ export let activeGames: Array<Game> = [];
  */
 export class Game {
     public lobbyId: string;
-    public players: IConnectedPlayer = {};
     public maxPlayers = 2;
+
+    public players: IConnectedPlayer = {};
+    public rockets: IProjectile = {};
 
     private namespace: socketIo.Namespace;
 
@@ -242,9 +244,9 @@ export class Game {
                 const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
 
                 const TILE_HITBOX_DIMENSIONS = {
-                    width: 13,
-                    height: 14,
-                    vertOffset: 7
+                    width: 15,
+                    height: 15,
+                    vertOffset: 4
                 }
 
                 for (let key in this.destroyedTiles) {
@@ -326,7 +328,9 @@ export class Game {
             if (movementDir !== obstructionData.playerCollisionDir && obstructionData.withinMap) {
 
                 // Update Player Positon and Facing Direction based on Client Movement Input
-                movementFunc();
+                if (movementFunc !== undefined) {
+                    movementFunc();
+                }
                 
                 // Sync Player Position with all Clients
                 this.namespace.emit(GameEvents.PLAYER_MOVE, {
@@ -368,6 +372,11 @@ export class Game {
 
         setTimeout(() => {
             this.destroyedTiles.push(tilePos);
+
+            // Check if Players are on Newly Destroyed Tile
+            for (let socketId in this.players) {
+                this.syncPlayerPositions(socketId, Directions.DOWN);
+            }
         }, TILE_DESTROY_WARNING_MS);
     }
 
@@ -488,6 +497,8 @@ export class Game {
 
             // Rocket Shoot Event
             socket.on(GameEvents.ROCKET_SHOT, () => {
+
+                // Check if Player Can Shoot
                 if (this.players[socket.id].canShoot) {
                     this.players[socket.id].canShoot = false;
 
@@ -532,6 +543,12 @@ export class Game {
                             break;
                     }
 
+                    // Instantiate Rocket Projectile
+                    const INSTANCE_ID = Object.keys(this.players).length;
+                    const DIRECTION = new Vec2(knockbackVector.x * -1, knockbackVector.y * -1);
+
+                    this.rockets[INSTANCE_ID] = new RocketProjectile(this.players[socket.id].pos, DIRECTION, INSTANCE_ID);
+
                     // Apply Knockback if Not Colliding
                     this.syncPlayerPositions(socket.id, horKnockbackDir, () => {
                         const CALLBACK = () => {
@@ -540,7 +557,7 @@ export class Game {
                             // Check if Player Boosted off of the Map
                             setTimeout(() => {
                                 this.syncPlayerPositions(socket.id, horKnockbackDir);
-                            }, 25);
+                            }, 35);
                         }
 
                         if (vertKnockbackDir != null) {
@@ -559,6 +576,14 @@ export class Game {
                     setTimeout(() => {
                         this.players[socket.id].canShoot = true;
                     }, SHOOT_COOLDOWN_MS);
+
+                    // Initialize Rocket with Clients
+                    this.namespace.emit(GameEvents.ROCKET_SHOT, {
+                        ownerSocketId: socket.id,
+                        direction: DIRECTION,
+                        pos: this.rockets[INSTANCE_ID].pos,
+                        instanceId: INSTANCE_ID
+                    });
                 }
             });
         });
@@ -567,15 +592,35 @@ export class Game {
     /**
      * Executes Continuously
      */
-    private tick() {
-        
-        // Tile Destruction
-        if (this.ticks % DESTROY_TILE_TICKS === 0) {
+    private tick() { 
+        if (this.ticks % DESTROY_TILE_TICKS === 0) { // Periodic Tile Destruction
             const RAND_TILE_INDEX = randomInt(0, this.availableTiles.length);
             const TILE_POS = this.availableTiles[RAND_TILE_INDEX];
 
             if (TILE_POS != null) {
                 this.destroyTile(TILE_POS);
+            }
+        }
+        else if (this.ticks % ROCKET_UPDATE_TICKS === 0) { // Rocket Projectile Movement
+            for (let instanceId in this.rockets) {
+
+                // Check Rocket Lifetime
+                if (this.rockets[instanceId].lifetime < MAX_ROCKET_LIFETIME) {
+
+                    // Increment Lifetime Counter
+                    this.rockets[instanceId].lifetime++;
+
+                    // Move Rocket on Server Side
+                    this.rockets[instanceId].move();
+                }
+                else {
+
+                    // Tell Clients Rocket is Destroyed
+                    this.namespace.emit(GameEvents.ROCKET_EXPLODE, instanceId);
+
+                    // Delete Server Side Rocket Instance
+                    delete this.rockets[instanceId];
+                }  
             }
         }
     }

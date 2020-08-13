@@ -4,12 +4,24 @@
  */
 
 import { displayWinner } from "./interface";
-import { initRenderLayers, deleteRenderController, mousePos } from "./renderer";
-import { startGame, Player, Chunk, TileDestroyParticles, convertToCameraSpace } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS } from "./utils";
+import { mousePos } from "./renderer";
+import { startGame, convertToCameraSpace } from "./game";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData } from "./utils";
+
+import Player from "./renderers/player";
+import Rocket from "./renderers/rocket";
+import RenderController from "./renderers/controller";
+
+import { Chunk } from "./renderers/chunk";
+import { TileDestroyParticles } from "./renderers/particles"
 
 import $ from "jquery";
 import io from "socket.io-client";
+
+/**
+ * Client Socket Connection
+ */
+let socket: SocketIOClient.Socket;
 
 /**
  * Socket ID of the Current Client
@@ -29,13 +41,18 @@ export let loadedChunks: Array<Chunk> = [];
 /**
  * Tracks Players Connected with the Server
  */
-export let connectedPlayers: { [socketId: string]: Player } = {};
+export let connectedPlayers: IConnectedPlayer = {};
+
+/**
+ * Tracks Active Handrocket Projectiles from the Server
+ */
+export let rocketProjectiles: IProjectile = {};
 
 /**
  * Handles Crumble Keyboard and Mouse Input
  * @param socket Socket Connection to Send Input Updates to
  */
-function handleInput(socket: SocketIOClient.Socket) {
+function handleInput() {
     let keysPressed: any = {};
     let mousePressed: any = {};
 
@@ -126,10 +143,7 @@ function handleInput(socket: SocketIOClient.Socket) {
         if (mousePressed[0]) {
             if (canShoot) {
                 canShoot = false;
-                socket.emit(GameEvents.ROCKET_SHOT);
-
-                // Create Muzzle Blast Particles
-                connectedPlayers[socket.id].createMuzzleBlast();
+                socket.emit(GameEvents.ROCKET_SHOT);  
 
                 // Client Side Shoot Cooldown
                 setTimeout(() => {
@@ -147,7 +161,7 @@ function handleInput(socket: SocketIOClient.Socket) {
  * @param lobbyId The Lobby ID to Connect to
  */
 export function handleClientSocket(name: string, lobbyId: string) {
-    const socket = io(`ws://192.168.0.22:8000/lobbies/${lobbyId}`, {onlyBinaryUpgrades: true, transports: ["websocket"], upgrade: false});
+    socket = io(`ws://192.168.0.22:8000/lobbies/${lobbyId}`, {onlyBinaryUpgrades: true, transports: ["websocket"], upgrade: false});
 
     // Connection Event
     socket.on(SocketEvents.CONNECTED, () => {
@@ -168,7 +182,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
             $("#match-wait-menu").css("display", "none");
 
             // Initialize Render Layers
-            initRenderLayers();
+            RenderController.initLayers();
 
             // Instantiate Players
             const PLAYERS: any = gameData.players;
@@ -188,7 +202,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
             loadedChunks = generateChunkEdges(loadedChunks);
 
             // Start Game
-            handleInput(socket);
+            handleInput();
             startGame();
         }
         else {
@@ -201,11 +215,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
     socket.on(SocketEvents.PLAYER_LEAVE, (socketId: string) => {
         console.log(`Player of Socket ID "${socketId}" has Left`);
 
-        deleteRenderController(connectedPlayers[socketId].handrocket);
-        deleteRenderController(connectedPlayers[socketId].shadow);
-        deleteRenderController(connectedPlayers[socketId].nametag);
-        deleteRenderController(connectedPlayers[socketId]);
-
+        connectedPlayers[socketId].destroy();
         delete connectedPlayers[socketId];
     });
 
@@ -226,6 +236,19 @@ export function handleClientSocket(name: string, lobbyId: string) {
 
         // Trigger On Death Event
         connectedPlayers[deathInfo.socketId].onDeath(deathInfo.fellOffFront);
+    });
+
+    // Create Rocket Event
+    socket.on(GameEvents.ROCKET_SHOT, (rocket: IRocketData) => {
+        rocketProjectiles[rocket.instanceId] = new Rocket(rocket.pos, rocket.direction as Vec2);
+
+        // Create Muzzle Blast Particles
+        connectedPlayers[rocket.ownerSocketId as string].createMuzzleBlast();
+    });
+
+    // Rocket Explode Event
+    socket.on(GameEvents.ROCKET_EXPLODE, (instanceId: number) => {
+        rocketProjectiles[instanceId].explode();
     });
 
     // Tile Destroy Event

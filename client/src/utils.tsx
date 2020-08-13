@@ -1,9 +1,18 @@
 /**
  * Crumble Client Main Ulitity File
+ * Colour Palette: ENDESGA 32 (https://lospec.com/palette-list/endesga-32)
  * @author Connell Reffo
  */
 
-import { Chunk, ChunkEdge, Player } from "./game";
+import Player from "./renderers/player";
+import Rocket from "./renderers/rocket";
+
+import { Chunk, ChunkEdge } from "./renderers/chunk";
+
+/**
+ * Path Where Crumble Graphics Assets are Stored
+ */
+export let GRAPHICS_PATH = process.env.PUBLIC_URL + "/graphics/";
 
 /**
  * Maximum Length for Player Name
@@ -13,37 +22,47 @@ export const MAX_NAME_LENGTH = 16;
 /**
  * Colour of the Canvas Background
  */
-export const BG_COLOUR = "#121212";
+export const BG_COLOUR = "#181425";
 
 /**
  * Colour of Chunk Ground
  */
-export const CHUNK_GROUND_COLOUR = "#c2c2c2";
+export const CHUNK_GROUND_COLOUR = "#c0cbdc";
 
 /**
  * Colour of Chunk Edge
  */
-export const CHUNK_EDGE_COLOUR = "#9c9c9c";
+export const CHUNK_EDGE_COLOUR = "#8b9bb4";
 
 /**
  * Colour of Tile Destruction Particles
  */
-export const TILE_DESTROY_PARTICLE_COLOUR = "#ff6d57";
+export const TILE_DESTROY_PARTICLE_COLOUR = "#b55088";
 
 /**
  * Colour of Muzzle Blast Particles
  */
-export const MUZZLE_BLAST_PARTICLE_COLOUR = "#d95050";
+export const MUZZLE_BLAST_PARTICLE_COLOUR = "#feae34";
+
+/**
+ * Colour of Rocket Trail Smoke
+ */
+export const ROCKET_SMOKE_TRAIL_COLOUR = "#ffffff";
+
+/**
+ * Colour of Rocket Projectile
+ */
+export const ROCKET_PROJECTILE_COLOUR = "#ff0044";
 
 /**
  * Nametag Colour for the Client Player
  */
-export const NAMETAG_SELF_COLOUR = "#33b862";
+export const NAMETAG_SELF_COLOUR = "#63c74d";
 
 /**
  * Nametag Colour for the Opposing Player(s)
  */
-export const NAMETAG_ENEMY_COLOUR = "#f71e42";
+export const NAMETAG_ENEMY_COLOUR = "#e43b44";
 
 /**
  * Vertical Offset of Shadow from a Player
@@ -59,6 +78,11 @@ export const PLAYER_NAMETAG_OFFSET = 53;
  * Vertical Offset of Held Handrock Weapon for a Player
  */
 export const PLAYER_HANDROCKET_OFFSET = 22;
+
+/**
+ * Speed of Rocket on the Client Side
+ */
+export const CLIENT_ROCKET_SPEED = 3.3;
 
 /**
  * Lowest Render Layer (Bottom)
@@ -160,15 +184,29 @@ export interface IConnectedPlayer {
 }
 
 /**
+ * Represents a Rocket Projectile Object
+ */
+export interface IProjectile {
+    [instanceId: string]: Rocket
+}
+
+/**
+ * Represents Data from Server used to Initialize a New Rocket on the Client
+ */
+export interface IRocketData {
+    ownerSocketId?: string
+    direction?: Vec2
+    pos: Vec2,
+    instanceId: number
+}
+
+/**
  * Represents Object Data of Players Sent from the Socket Server
  */
 export interface IPlayerData {
     socketId?: string
     name: string,
-    pos: {
-        x: number,
-        y: number
-    }
+    pos: Vec2
 }
 
 /**
@@ -224,7 +262,8 @@ export enum GameEvents {
     PLAYER_WON = "playerwon",
     TILE_DESTROYED = "tiledestroyed",
     ANGLE_CHANGE = "anglechange",
-    ROCKET_SHOT = "rocketshot"
+    ROCKET_SHOT = "rocketshot",
+    ROCKET_EXPLODE = "rocketexplode"
 }
 
 /**

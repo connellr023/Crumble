@@ -4,10 +4,10 @@
  */
 
 import "./main.css";
-import "./crumble/game";
-import "./crumble/socket";
+import "../game";
+import "../socket";
 
-import { connectToLobby } from "./crumble/interface"
+import { connectToLobby } from "../interface";
 
 import * as React from "react";
 
