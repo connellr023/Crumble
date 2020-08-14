@@ -75,8 +75,12 @@ export class Collider {
 
         this.lobbyId = lobbyId;
 
-        // Register Collider With Collision Manager
-        activeGames[this.lobbyId].colliders.push(this);
+        // Check if Game is Still Active
+        if (activeGames[this.lobbyId] !== undefined) {
+
+            // Register Collider With Collision Manager
+            activeGames[this.lobbyId].colliders.push(this);
+        }
     } 
 
     /**
@@ -85,12 +89,17 @@ export class Collider {
     public getCollisions(): Array<Collider> {
         let collisions: Array<Collider> = [];
 
-        activeGames[this.lobbyId].colliders.forEach((collider) => {
-            if (collider !== this && CollisionManager.isColliding(this, collider)) {
-                collisions.push(collider);
-            }
-        });
+        // Check if Game Has Ended
+        if (activeGames[this.lobbyId] !== undefined) {
 
+            // Process Collisions
+            activeGames[this.lobbyId].colliders.forEach((collider) => {
+                if (collider !== this && CollisionManager.isColliding(this, collider)) {
+                    collisions.push(collider);
+                }
+            });
+        }
+        
         // Return Final Array of Collisions
         return collisions;
     }

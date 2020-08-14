@@ -4,7 +4,7 @@
  */
 
 import { clientSocketId, connectedPlayers } from "./socket";
-import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH } from "./utils";
+import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH, PLAYER_FALL_DIMENSIONS } from "./utils";
 
 import Camera from "./gameobjects/camera";
 import RenderController from "./gameobjects/controller";
@@ -21,6 +21,7 @@ export let mousePos = Vec2.zero;
 export let assets = {
     HANDROCKET_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SPRITESHEET: [] as Array<p5.Image>,
+    PLAYER_FALL_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SHADOW: new p5.Image()
 };
 
@@ -48,12 +49,14 @@ function splitSpritesheet(sheet: p5.Image, spriteWidth: number, spriteHeight: nu
  */
 export function game(p: p5) {
     let playerSpritesheet: p5.Image;
+    let playerFallSpritesheet: p5.Image;
     let handrocketSpritesheet: p5.Image;
 
     p.preload = () => {
 
         // Load Assets
         playerSpritesheet = p.loadImage(GRAPHICS_PATH + "player.png");
+        playerFallSpritesheet = p.loadImage(GRAPHICS_PATH + "player_fall.png");
         handrocketSpritesheet = p.loadImage(GRAPHICS_PATH + "handrocket.png");
 
         assets.PLAYER_SHADOW = p.loadImage(GRAPHICS_PATH + "shadow.png");
@@ -61,10 +64,13 @@ export function game(p: p5) {
 
     p.setup = () => {
 
-        // Split Player Spritesheet into Frames
+        // Split Player Spritesheet Into Frames
         assets.PLAYER_SPRITESHEET = splitSpritesheet(playerSpritesheet, PLAYER_DIMENSIONS.width, PLAYER_DIMENSIONS.height, PLAYER_DIMENSIONS.frames);
 
-        // Split Handrocket Spritesheet into Frames
+        // Split Falling Player Spritesheet Into Frames
+        assets.PLAYER_FALL_SPRITESHEET = splitSpritesheet(playerFallSpritesheet, PLAYER_FALL_DIMENSIONS.width, PLAYER_FALL_DIMENSIONS.height, PLAYER_FALL_DIMENSIONS.frames)
+
+        // Split Handrocket Spritesheet Into Frames
         assets.HANDROCKET_SPRITESHEET = splitSpritesheet(handrocketSpritesheet, HANDROCKET_DIMENSIONS.width, HANDROCKET_DIMENSIONS.height, HANDROCKET_DIMENSIONS.frames);
         
         // Initialize Canvas

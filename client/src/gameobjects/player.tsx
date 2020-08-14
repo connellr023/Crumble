@@ -5,8 +5,9 @@
 
 import { assets } from "../renderer";
 import { render } from "../game";
-import { Vec2, FacingDirections, PlayerAnimationStates, HandrocketAngles, HANDROCKET_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, PLAYER_DIMENSIONS, PLAYER_SHADOW_OFFSET, PLAYER_NAMETAG_OFFSET } from "../utils";
+import { Vec2, FacingDirections, PlayerAnimationStates, HandrocketAngles, HANDROCKET_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, PLAYER_DIMENSIONS, PLAYER_SHADOW_OFFSET, PLAYER_NAMETAG_OFFSET, PLAYER_FALL_DIMENSIONS } from "../utils";
 import { clientSocketId } from "../socket";
+import { Image } from "p5";
 
 import Camera from "./camera";
 import Handrocket from "./handrocket"
@@ -40,7 +41,9 @@ export default class Player extends RenderController {
 
     private handrocketVertOffset: number;
 
-    private deathFallVelocity: number;
+    private fallAcceleration = 0.65;
+    private fallVelocity: number = 8;
+    private fallTerminalVelocity: number = 40;
 
     /**
      * @param name Name of the Player
@@ -66,8 +69,6 @@ export default class Player extends RenderController {
         this.dead = false;
 
         this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;
-
-        this.deathFallVelocity = 5;
 
         // Set Namtag Colour
         let nametagColour = NAMETAG_ENEMY_COLOUR;
@@ -151,7 +152,9 @@ export default class Player extends RenderController {
      */
     public onDeath(fellOffFront: boolean) {
         let renderLayer = 1;
+
         this.dead = true;
+        this.frame = 0;
 
         this.handrocket.invisible = true;
         this.shadow.invisible = true;
@@ -168,8 +171,11 @@ export default class Player extends RenderController {
                 clearInterval(DEATH_INTERVAL);
             }
 
-            this.serverPos = new Vec2(this.pos.x, this.pos.y + this.deathFallVelocity);
-            this.deathFallVelocity += 0.4;
+            if (this.fallVelocity < this.fallTerminalVelocity) {
+                this.fallVelocity += this.fallAcceleration;
+            }
+
+            this.serverPos = new Vec2(this.pos.x, this.pos.y + this.fallVelocity);
         }, 15);
     }
 
@@ -206,14 +212,14 @@ export default class Player extends RenderController {
         new MuzzleBlastParticles(new Vec2(this.handrocket.pos.x + offset.x, this.handrocket.pos.y + offset.y));
     }
 
-    public render() {
-
-        // Lerp Position
-        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.2);
-
-        const REND_POS = Camera.convertToCameraSpace(this.pos);
-
-        // Render Player Sprite
+    /**
+     * Renders a Sprite as the Player
+     * @param sprite Sprite to Render
+     * @param renderPos Position on Canvas to Render Sprite at
+     * @param width Width of Sprite
+     * @param height Height of Sprite
+     */
+    private renderPlayerSprite(sprite: Image, renderPos: Vec2, width: number, height: number) {
         render.push();
 
         switch (this.direction) {
@@ -221,22 +227,29 @@ export default class Player extends RenderController {
                 render.scale(1, 1);
                 break;
             case FacingDirections.RIGHT:
-                const HORIZONTAL_OFFSET = 5;
-
-                render.translate(REND_POS.x - Camera.pos.x + (render.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width, 0);
+                render.translate(renderPos.x - Camera.pos.x + (render.windowWidth / 2) + this.pos.x, 0);
                 render.scale(-1, 1);
                 break;
         }
 
         render.imageMode(render.CENTER);
         render.image(
-            assets.PLAYER_SPRITESHEET[this.frame],
-            REND_POS.x,
-            REND_POS.y,
-            PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale,
-            PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale
+            sprite,
+            renderPos.x,
+            renderPos.y,
+            width,
+            height
         );
+
         render.pop();
+    }
+
+    public render() {
+
+        // Lerp Position
+        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.2);
+
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
         // Update Player Speed
         if (!this.calculatingSpeed) {
@@ -247,6 +260,8 @@ export default class Player extends RenderController {
         const ANIM_SPEED_THRESHOLD = 0.4;
 
         if (!this.dead) {
+
+            // Check Player Speed
             if (this.speed.x > ANIM_SPEED_THRESHOLD || this.speed.y > ANIM_SPEED_THRESHOLD) {
                 this.state = PlayerAnimationStates.RUN;
             }
@@ -270,6 +285,7 @@ export default class Player extends RenderController {
                     }
 
                     break;
+
                 case PlayerAnimationStates.RUN:
                     if (this.frame < 2) {
                         this.frame = 1;
@@ -292,10 +308,24 @@ export default class Player extends RenderController {
 
                     break;
             }
+
+            // Update Sprite
+            this.renderPlayerSprite(assets.PLAYER_SPRITESHEET[this.frame], REND_POS, PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale);
         }
         else {
-            this.frame = 0;
-            this.state = PlayerAnimationStates.IDLE
+            this.state = PlayerAnimationStates.IDLE;
+
+            // Animate Falling Player
+            if (render.frameCount % 10 === 0) {
+                this.frame++;
+
+                if (this.frame > PLAYER_FALL_DIMENSIONS.frames - 1) {
+                    this.frame = 0;
+                }
+            }
+
+            // Update Sprite
+            this.renderPlayerSprite(assets.PLAYER_FALL_SPRITESHEET[this.frame], REND_POS, PLAYER_FALL_DIMENSIONS.width * PLAYER_DIMENSIONS.scale, PLAYER_FALL_DIMENSIONS.height * PLAYER_DIMENSIONS.scale);
         }
 
         // Set Held Handrocket Position

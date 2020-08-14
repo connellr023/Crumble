@@ -77,8 +77,12 @@ export default class Player {
             }
         }
 
-        // Check if Player Was on the Front or Back of the Chunk
-        obstructionData.onFront = (this.pos.y > this.lastChunkCollider.pos.y + PLAYER_DIMENSIONS.height);
+        // Check if Game is Still Active
+        if (activeGames[this.game.lobbyId] !== undefined) {
+
+            // Check if Player Was on the Front or Back of the Chunk
+            obstructionData.onFront = (this.pos.y > this.lastChunkCollider.pos.y + PLAYER_DIMENSIONS.height);
+        }
 
         // Check if Player is Touching a Destroyed Tile
         for (let key in COLLISIONS) {
@@ -184,10 +188,11 @@ export default class Player {
             }
 
             // Instantiate Rocket Projectile
+            const ROCKET_SPAWN_OFFSET = 6;
             const INSTANCE_ID = Object.keys(this.game.players).length;
             const DIRECTION = new Vec2(knockbackVector.x * -1, knockbackVector.y * -1);
 
-            this.game.rockets[INSTANCE_ID] = new Rocket(this.pos, DIRECTION, INSTANCE_ID);
+            this.game.rockets[INSTANCE_ID] = new Rocket(new Vec2(this.pos.x + (DIRECTION.x * ROCKET_SPAWN_OFFSET), this.pos.y + (DIRECTION.y * ROCKET_SPAWN_OFFSET)), DIRECTION, INSTANCE_ID);
 
             // Apply Knockback if Not Colliding
             this.knockback(HANDROCKET_KNOCKBACK_FORCE, horKnockbackDir, vertKnockbackDir);

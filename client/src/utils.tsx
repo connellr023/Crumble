@@ -140,7 +140,7 @@ export const SHOOT_COOLDOWN_MS = 1300;
 export const CURSOR_MIDDLE_DEADSPACE = 35;
 
 /**
- * Dimensions of Player Sprite
+ * Dimensions of Standing Player Sprites
  */
 export const PLAYER_DIMENSIONS = {
     scale: 7.5,
@@ -148,6 +148,15 @@ export const PLAYER_DIMENSIONS = {
     height: 9,
     frames: 8
 };
+
+/**
+ * Dimensions of Falling Player Sprites
+ */
+export const PLAYER_FALL_DIMENSIONS = {
+    width: 9,
+    height: 6,
+    frames: 3
+}
 
 /**
  * Dimensions of a Player's Handrocket
