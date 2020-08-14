@@ -3,9 +3,10 @@
  * @author Connell Reffo
  */
 
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { render } from "../game";
 import { randomInt, Vec2, IParticle, TILE_DESTROY_PARTICLE_COLOUR, TILE_SIZE, MUZZLE_BLAST_PARTICLE_COLOUR, ROCKET_SMOKE_TRAIL_COLOUR, ROCKET_PROJECTILE_COLOUR } from "../utils";
 
+import Camera from "./camera";
 import RenderController from "./controller";
 
 /**
@@ -68,14 +69,14 @@ export class TileDestroyParticles extends RenderController {
     }
 
     public render() {
-        const REND_POS = convertToCameraSpace(new Vec2(this.tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), this.tilePos.y * TILE_SIZE - (TILE_SIZE * 1.5)));
+        const REND_POS = Camera.convertToCameraSpace(new Vec2(this.tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), this.tilePos.y * TILE_SIZE - (TILE_SIZE * 1.5)));
 
         // Render Particles
         this.particles.forEach((particle) => {
-            REND.noStroke();
-            REND.fill(TILE_DESTROY_PARTICLE_COLOUR);
-            REND.rectMode(REND.CENTER);
-            REND.rect(REND_POS.x + particle.pos.x + (particle.direction.run * 0.4), REND_POS.y + particle.pos.y + (particle.direction.rise * 0.4), particle.size, particle.size);
+            render.noStroke();
+            render.fill(TILE_DESTROY_PARTICLE_COLOUR);
+            render.rectMode(render.CENTER);
+            render.rect(REND_POS.x + particle.pos.x + (particle.direction.run * 0.4), REND_POS.y + particle.pos.y + (particle.direction.rise * 0.4), particle.size, particle.size);
 
             if (particle.lifetimeFrames >= particle.maxLifetimeFrames) {
                 if (!this.stopParticles) {
@@ -161,12 +162,12 @@ export class MuzzleBlastParticles extends RenderController {
 
         // Render Particles
         this.particles.forEach((particle) => {
-            const PARTICLE_REND_POS = convertToCameraSpace(particle.pos);
+            const PARTICLE_REND_POS = Camera.convertToCameraSpace(particle.pos);
 
-            REND.noStroke();
-            REND.fill(MUZZLE_BLAST_PARTICLE_COLOUR);
-            REND.rectMode(REND.CENTER);
-            REND.rect(PARTICLE_REND_POS.x + (particle.direction.run * 0.4), PARTICLE_REND_POS.y + (particle.direction.rise * 0.4), particle.size, particle.size);
+            render.noStroke();
+            render.fill(MUZZLE_BLAST_PARTICLE_COLOUR);
+            render.rectMode(render.CENTER);
+            render.rect(PARTICLE_REND_POS.x + (particle.direction.run * 0.4), PARTICLE_REND_POS.y + (particle.direction.rise * 0.4), particle.size, particle.size);
 
             if (particle.lifetimeFrames >= particle.maxLifetimeFrames && this.particles.length > 0) {
                 this.particles = this.particles.filter((part) => {
@@ -242,12 +243,12 @@ export class SmokeTrailParticles extends RenderController {
 
         // Render Particles
         this.particles.forEach((particle) => {
-            const PARTICLE_REND_POS = convertToCameraSpace(particle.pos);
+            const PARTICLE_REND_POS = Camera.convertToCameraSpace(particle.pos);
 
-            REND.noStroke();
-            REND.fill(ROCKET_SMOKE_TRAIL_COLOUR);
-            REND.rectMode(REND.CENTER);
-            REND.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
+            render.noStroke();
+            render.fill(ROCKET_SMOKE_TRAIL_COLOUR);
+            render.rectMode(render.CENTER);
+            render.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
 
             if (particle.lifetimeFrames >= particle.maxLifetimeFrames) {
                 if (!this.stopParticles) {
@@ -332,12 +333,12 @@ export class ExplodeParticles extends RenderController {
 
         // Render Particles
         this.particles.forEach((particle) => {
-            const PARTICLE_REND_POS = convertToCameraSpace(particle.pos);
+            const PARTICLE_REND_POS = Camera.convertToCameraSpace(particle.pos);
 
-            REND.noStroke();
-            REND.fill(ROCKET_PROJECTILE_COLOUR);
-            REND.rectMode(REND.CENTER);
-            REND.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
+            render.noStroke();
+            render.fill(ROCKET_PROJECTILE_COLOUR);
+            render.rectMode(render.CENTER);
+            render.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
 
             if (particle.lifetimeFrames >= particle.maxLifetimeFrames) {
                 if (this.particles.length > 0) {

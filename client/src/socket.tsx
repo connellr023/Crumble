@@ -5,9 +5,10 @@
 
 import { displayWinner } from "./interface";
 import { mousePos } from "./renderer";
-import { startGame, convertToCameraSpace } from "./game";
+import { startGame } from "./game";
 import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData } from "./utils";
 
+import Camera from "./gameobjects/camera";
 import Player from "./gameobjects/player";
 import Rocket from "./gameobjects/rocket";
 import RenderController from "./gameobjects/controller";
@@ -81,7 +82,7 @@ function handleInput() {
     let canShoot = true;
 
     document.addEventListener("mousemove", () => {
-        const PLAYER_REND_POS = convertToCameraSpace(connectedPlayers[clientSocketId].pos);
+        const PLAYER_REND_POS = Camera.convertToCameraSpace(connectedPlayers[clientSocketId].pos);
 
         let handrocketAngle: HandrocketAngles;
         let facingDir: FacingDirections;

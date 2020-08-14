@@ -5,32 +5,27 @@
 
 import { Vec2 } from "./utils";
 import { inputUpdateInterval } from "./socket";
-import { game, cameraPos } from "./renderer";
+import { game } from "./renderer";
 
+import Camera from "./gameobjects/camera";
 import $ from "jquery";
 import p5 from "p5";
 
 /**
- * Current Instance of P5 Renderer
+ * Initialize Camera Position Variable
  */
-export let gameInstance: p5;
+Camera.pos = Vec2.zero;
 
 /**
- * Converts a 2D Vector to a Position Relative to Camera View
- * @param pos Position to Convert
+ * Current Instance of P5 Renderer
  */
-export function convertToCameraSpace(pos: Vec2): Vec2 {
-    return new Vec2(
-        (gameInstance.windowWidth / 2) + pos.x - cameraPos.x,
-        (gameInstance.windowHeight / 2) + pos.y - cameraPos.y
-    );
-}
+export let render: p5;
 
 /**
  * Starts Game
  */
 export function startGame() {
-    gameInstance = new p5(game);
+    render = new p5(game);
     $("canvas").css("display", "block");
 }
 

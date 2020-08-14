@@ -3,6 +3,7 @@
  * @author Connell Reffo
  */
 
+import Game from "./game";
 import Player from "./gameobjects/player";
 import Rocket from "./gameobjects/rocket";
 
@@ -157,6 +158,10 @@ export enum Directions {
     DOWN = "down",
     LEFT = "left",
     RIGHT = "right"
+}
+
+export interface IActiveGame {
+    [lobbyId: string]: Game
 }
 
 /**

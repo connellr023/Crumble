@@ -6,13 +6,9 @@
 import { clientSocketId, connectedPlayers } from "./socket";
 import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH } from "./utils";
 
+import Camera from "./gameobjects/camera";
 import RenderController from "./gameobjects/controller";
 import p5 from "p5";
-
-/**
- * Position of the Crumble Camera
- */
-export let cameraPos = Vec2.zero;
 
 /**
  * Position of the Mouse on the Canvas
@@ -27,14 +23,6 @@ export let assets = {
     PLAYER_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SHADOW: new p5.Image()
 };
-
-/**
- * Sets the Position of the Crumble Camera
- * @param pos Position to Change Camera to
- */
-export function setCameraPos(pos: Vec2) {
-    cameraPos = pos;
-}
 
 /**
  * Splits a Spritesheet Horizontally
@@ -97,9 +85,9 @@ export function game(p: p5) {
 
         // Make Camera Lock to Player Chunk Pos
         if (!connectedPlayers[clientSocketId].dead) {
-            const LERP_POS = Vec2.lerp(cameraPos, new Vec2(connectedPlayers[clientSocketId].currentChunk.x * TOTAL_CHUNK_SIZE, connectedPlayers[clientSocketId].currentChunk.y * TOTAL_CHUNK_SIZE), 0.1);
+            const LERP_POS = Vec2.lerp(Camera.pos, new Vec2(connectedPlayers[clientSocketId].currentChunk.x * TOTAL_CHUNK_SIZE, connectedPlayers[clientSocketId].currentChunk.y * TOTAL_CHUNK_SIZE), 0.1);
 
-            setCameraPos(LERP_POS);
+            Camera.pos = LERP_POS;
         }
 
         // Render All Render Controllers

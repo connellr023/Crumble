@@ -6,7 +6,7 @@
 import { Vec2, FacingDirections, HandrocketAngles, Directions, GameEvents, SocketEvents, IPlayerObstructionData, PLAYER_SPEED, PLAYER_DIMENSIONS, HANDROCKET_KNOCKBACK_FORCE, SHOOT_COOLDOWN_MS, TOTAL_CHUNK_SIZE, CHUNK_HEIGHT_OFFSET } from "../utils";
 import { Collider, CollisionSources } from "../collision";
 
-import Game from "../game";
+import Game, { activeGames } from "../game";
 import Rocket from "./rocket";
 
 /**
@@ -47,7 +47,7 @@ export default class Player {
         this.canShoot = true;
 
         // Set Collider
-        this.collider = new Collider(this.pos, PLAYER_DIMENSIONS.width, PLAYER_DIMENSIONS.height, CollisionSources.PLAYER);
+        this.collider = new Collider(this.pos, PLAYER_DIMENSIONS.width, PLAYER_DIMENSIONS.height, CollisionSources.PLAYER, this.game.lobbyId);
     }
 
     /**

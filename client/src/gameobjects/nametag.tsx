@@ -3,9 +3,10 @@
  * @author Connell Reffo
  */
 
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { render } from "../game";
 import { Vec2 } from "../utils";
 
+import Camera from "./camera";
 import RenderController from "./controller";
 
 /**
@@ -30,13 +31,13 @@ export default class Nametag extends RenderController {
     }
 
     public render() {
-        const REND_POS = convertToCameraSpace(this.pos);
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
         // Render Text
-        REND.fill(this.colour);
-        REND.textFont("Crumble");
-        REND.textAlign(REND.CENTER, REND.CENTER);
-        REND.textSize(25);
-        REND.text(this.text, REND_POS.x, REND_POS.y);
+        render.fill(this.colour);
+        render.textFont("Crumble");
+        render.textAlign(render.CENTER, render.CENTER);
+        render.textSize(25);
+        render.text(this.text, REND_POS.x, REND_POS.y);
     }
 }

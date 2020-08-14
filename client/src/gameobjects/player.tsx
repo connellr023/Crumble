@@ -3,11 +3,12 @@
  * @author Connell Reffo
  */
 
-import { cameraPos, assets } from "../renderer";
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { assets } from "../renderer";
+import { render } from "../game";
 import { Vec2, FacingDirections, PlayerAnimationStates, HandrocketAngles, HANDROCKET_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, PLAYER_DIMENSIONS, PLAYER_SHADOW_OFFSET, PLAYER_NAMETAG_OFFSET } from "../utils";
 import { clientSocketId } from "../socket";
 
+import Camera from "./camera";
 import Handrocket from "./handrocket"
 import Shadow from "./shadow";
 import Nametag from "./nametag";
@@ -210,32 +211,32 @@ export default class Player extends RenderController {
         // Lerp Position
         this.pos = Vec2.lerp(this.pos, this.serverPos, 0.2);
 
-        const REND_POS = convertToCameraSpace(this.pos);
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
         // Render Player Sprite
-        REND.push();
+        render.push();
 
         switch (this.direction) {
             case FacingDirections.LEFT:
-                REND.scale(1, 1);
+                render.scale(1, 1);
                 break;
             case FacingDirections.RIGHT:
                 const HORIZONTAL_OFFSET = 5;
 
-                REND.translate(REND_POS.x - cameraPos.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width, 0);
-                REND.scale(-1, 1);
+                render.translate(REND_POS.x - Camera.pos.x + (render.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + PLAYER_DIMENSIONS.width, 0);
+                render.scale(-1, 1);
                 break;
         }
 
-        REND.imageMode(REND.CENTER);
-        REND.image(
+        render.imageMode(render.CENTER);
+        render.image(
             assets.PLAYER_SPRITESHEET[this.frame],
             REND_POS.x,
             REND_POS.y,
             PLAYER_DIMENSIONS.width * PLAYER_DIMENSIONS.scale,
             PLAYER_DIMENSIONS.height * PLAYER_DIMENSIONS.scale
         );
-        REND.pop();
+        render.pop();
 
         // Update Player Speed
         if (!this.calculatingSpeed) {
@@ -256,7 +257,7 @@ export default class Player extends RenderController {
             // Animate Player
             switch (this.state) {
                 case PlayerAnimationStates.IDLE:
-                    if (REND.frameCount % 20 === 0) {
+                    if (render.frameCount % 20 === 0) {
                         this.frame++;
 
                         if (this.frame > 1) {
@@ -274,7 +275,7 @@ export default class Player extends RenderController {
                         this.frame = 1;
                     }
 
-                    if (REND.frameCount % 10 === 0) {
+                    if (render.frameCount % 10 === 0) {
                         if (this.frame >= PLAYER_DIMENSIONS.frames - 1) {
                             this.frame = 1;
                             this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;

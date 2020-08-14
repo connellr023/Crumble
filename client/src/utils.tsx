@@ -163,6 +163,35 @@ export const HANDROCKET_DIMENSIONS = {
 };
 
 /**
+ * Represents a 2D Position
+ */
+export class Vec2 {
+    public x: number;
+    public y: number;
+
+    public static zero: Vec2 = new Vec2(0, 0);
+
+    /**
+     * @param x X Position
+     * @param y Y Position
+     */
+    constructor (x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Lerps Between 2 Different Vectors
+     * @param start Start Vector
+     * @param end End Vector
+     * @param amount Lerp Amount
+     */
+    public static lerp(start: Vec2, end: Vec2, amount: number): Vec2 {
+        return new Vec2((1 - amount) * start.x + amount * end.x, (1 - amount) * start.y + amount * end.y);
+    }
+}
+
+/**
  * Data Attributed with an Individual Particle
  */
 export interface IParticle {
@@ -340,30 +369,4 @@ export function randomInt(min: number, max: number): number {
     max = Math.floor(max);
     
     return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export class Vec2 {
-    public x: number;
-    public y: number;
-
-    public static zero: Vec2 = new Vec2(0, 0);
-
-    /**
-     * @param x X Position
-     * @param y Y Position
-     */
-    constructor (x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /**
-     * Lerps Between 2 Different Vectors
-     * @param start Start Vector
-     * @param end End Vector
-     * @param amount Lerp Amount
-     */
-    public static lerp(start: Vec2, end: Vec2, amount: number): Vec2 {
-        return new Vec2((1 - amount) * start.x + amount * end.x, (1 - amount) * start.y + amount * end.y);
-    }
 }

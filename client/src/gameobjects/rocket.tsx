@@ -3,11 +3,12 @@
  * @author Connell Reffo
  */
 
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { render } from "../game";
 import { Vec2, CLIENT_ROCKET_SPEED, ROCKET_PROJECTILE_COLOUR } from "../utils";
 
 import { SmokeTrailParticles, ExplodeParticles } from "./particles";
 
+import Camera from "./camera";
 import RenderController from "./controller";
  
 /**
@@ -57,12 +58,12 @@ export default class Rocket extends RenderController {
         // Set Position of Trail
         this.trailParticles.pos = this.pos;
 
-        const REND_POS = convertToCameraSpace(this.pos);
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
         // Render Projectile
-        REND.noStroke();
-        REND.fill(ROCKET_PROJECTILE_COLOUR);
-        REND.rectMode(REND.CENTER);
-        REND.rect(REND_POS.x, REND_POS.y, 13, 13);  
+        render.noStroke();
+        render.fill(ROCKET_PROJECTILE_COLOUR);
+        render.rectMode(render.CENTER);
+        render.rect(REND_POS.x, REND_POS.y, 13, 13);  
     }
 }

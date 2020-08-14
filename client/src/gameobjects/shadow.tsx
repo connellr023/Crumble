@@ -4,9 +4,10 @@
  */
 
 import { assets } from "../renderer";
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { render } from "../game";
 import { Vec2, PLAYER_DIMENSIONS } from "../utils";
 
+import Camera from "./camera";
 import RenderController from "./controller";
 
 /**
@@ -28,17 +29,17 @@ export default class Shadow extends RenderController {
     public render() {
 
         // Render Shadow
-        const REND_POS = convertToCameraSpace(this.pos);
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
-        REND.tint(255, 80);
-        REND.imageMode(REND.CENTER);
-        REND.image(
+        render.tint(255, 80);
+        render.imageMode(render.CENTER);
+        render.image(
             assets.PLAYER_SHADOW,
             REND_POS.x,
             REND_POS.y,
             6 * PLAYER_DIMENSIONS.scale * 0.9,
             4 * PLAYER_DIMENSIONS.scale * 0.9
         );
-        REND.tint(255, 255);
+        render.tint(255, 255);
     }
 }

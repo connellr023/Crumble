@@ -38,7 +38,7 @@ function getAvailableLobby(): string {
     function openGame(): string {
 
         // Check if the Limit of Concurrently Running Games is Reached
-        if (activeGames.length < MAX_ACTIVE_GAMES) {
+        if (Object.keys(activeGames).length < MAX_ACTIVE_GAMES) {
 
             // Create a New Match
             const GAME_INSTANCE = new Game();
@@ -53,7 +53,7 @@ function getAvailableLobby(): string {
     }
 
     // Check if there are no Current Matches
-    if (activeGames.length > 0) {
+    if (Object.keys(activeGames).length > 0) {
 
         // Check if Match is Waiting for Player
         for (let activeGame in activeGames) {

@@ -3,6 +3,7 @@
  * @author Connell Reffo
  */
 
+import { activeGames } from "./game";
 import { Vec2 } from "./utils";
 
 /**
@@ -17,8 +18,8 @@ export enum CollisionSources {
 /**
  * Collision Manager
  */
-abstract class CollisionManager {
-    public static colliders: Array<Collider> = [];
+export class CollisionManager {
+    public colliders: Array<Collider> = [];
 
     /**
      * Checks if Two Different Colliders are Touching
@@ -57,20 +58,25 @@ export class Collider {
     public height: number;
     public source: CollisionSources;
 
+    private lobbyId: string;
+
     /**
      * @param pos Position of Collider
      * @param width Width of Collider
      * @param height Height of Collider
      * @param source Is The Source of the Collider
+     * @param lobbyId Is the Lobby ID of the Game That this Collider Belongs to
      */
-    constructor(pos: Vec2, width: number, height: number, source: CollisionSources) {
+    constructor(pos: Vec2, width: number, height: number, source: CollisionSources, lobbyId: string) {
         this.pos = pos;
         this.width = width;
         this.height = height;
         this.source = source;
 
+        this.lobbyId = lobbyId;
+
         // Register Collider With Collision Manager
-        CollisionManager.colliders.push(this);
+        activeGames[this.lobbyId].colliders.push(this);
     } 
 
     /**
@@ -79,12 +85,13 @@ export class Collider {
     public getCollisions(): Array<Collider> {
         let collisions: Array<Collider> = [];
 
-        CollisionManager.colliders.forEach((collider) => {
+        activeGames[this.lobbyId].colliders.forEach((collider) => {
             if (collider !== this && CollisionManager.isColliding(this, collider)) {
                 collisions.push(collider);
             }
         });
 
+        // Return Final Array of Collisions
         return collisions;
     }
 }

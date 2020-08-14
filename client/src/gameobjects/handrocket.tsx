@@ -3,10 +3,11 @@
  * @author Connell Reffo
  */
 
-import { cameraPos, assets } from "../renderer";
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { assets } from "../renderer";
+import { render } from "../game";
 import { Vec2, FacingDirections, HandrocketAngles, HANDROCKET_DIMENSIONS } from "../utils";
 
+import Camera from "./camera";
 import RenderController from "./controller";
 
 /**
@@ -56,26 +57,26 @@ export default class Handrocket extends RenderController {
     }
 
     public render() {
-        const REND_POS = convertToCameraSpace(this.pos);
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
 
         let directionHorizontalOffset: number;
         let angleVertOffset: number;
 
-        REND.push();
+        render.push();
 
         // Check Direction
         switch(this.direction) {
             case FacingDirections.LEFT:
                 const HORIZONTAL_OFFSET = 5;
                 
-                REND.translate(REND_POS.x - cameraPos.x + (REND.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + HANDROCKET_DIMENSIONS.width, 0);
-                REND.scale(-1, 1);
+                render.translate(REND_POS.x - Camera.pos.x + (render.windowWidth / 2 - HORIZONTAL_OFFSET) + this.pos.x + HANDROCKET_DIMENSIONS.width, 0);
+                render.scale(-1, 1);
 
                 directionHorizontalOffset = 32;
                 break;
             
             case FacingDirections.RIGHT:
-                REND.scale(1, 1);
+                render.scale(1, 1);
                 
                 directionHorizontalOffset = 29;
                 break;
@@ -97,9 +98,9 @@ export default class Handrocket extends RenderController {
         }
 
         // Render Hand Rocket
-        REND.imageMode(REND.CENTER);
-        REND.image(assets.HANDROCKET_SPRITESHEET[this.spriteFrame], REND_POS.x + directionHorizontalOffset, REND_POS.y + angleVertOffset, HANDROCKET_DIMENSIONS.width * HANDROCKET_DIMENSIONS.scale, HANDROCKET_DIMENSIONS.height * HANDROCKET_DIMENSIONS.scale);
+        render.imageMode(render.CENTER);
+        render.image(assets.HANDROCKET_SPRITESHEET[this.spriteFrame], REND_POS.x + directionHorizontalOffset, REND_POS.y + angleVertOffset, HANDROCKET_DIMENSIONS.width * HANDROCKET_DIMENSIONS.scale, HANDROCKET_DIMENSIONS.height * HANDROCKET_DIMENSIONS.scale);
         
-        REND.pop();
+        render.pop();
     }
 }

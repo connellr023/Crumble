@@ -3,9 +3,10 @@
  * @author Connell Reffo
  */
 
-import { gameInstance as REND, convertToCameraSpace } from "../game";
+import { render } from "../game";
 import { randomInt, Vec2, CHUNK_SIZE, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT, CHUNK_EDGE_COLOUR, CHUNK_GROUND_COLOUR, TILE_SIZE } from "../utils";
 
+import Camera from "./camera";
 import RenderController from "./controller";
 
 /**
@@ -51,12 +52,12 @@ export class Chunk extends RenderController {
         // Render Chunk Ground
         this.tiles.forEach((tile) => {
             if (!tile.destroyed) {
-                const REND_POS = convertToCameraSpace(new Vec2(tile.pos.x * TILE_SIZE - (TILE_SIZE * 1.5), tile.pos.y * TILE_SIZE - (TILE_SIZE * 1.5)));
+                const REND_POS = Camera.convertToCameraSpace(new Vec2(tile.pos.x * TILE_SIZE - (TILE_SIZE * 1.5), tile.pos.y * TILE_SIZE - (TILE_SIZE * 1.5)));
 
-                REND.noStroke();
-                REND.fill(CHUNK_GROUND_COLOUR);
-                REND.rectMode(REND.CENTER);
-                REND.rect(REND_POS.x, REND_POS.y, TILE_SIZE + CHUNK_SIZE_PADDING, TILE_SIZE + CHUNK_SIZE_PADDING);
+                render.noStroke();
+                render.fill(CHUNK_GROUND_COLOUR);
+                render.rectMode(render.CENTER);
+                render.rect(REND_POS.x, REND_POS.y, TILE_SIZE + CHUNK_SIZE_PADDING, TILE_SIZE + CHUNK_SIZE_PADDING);
             }
         });
     }
@@ -107,24 +108,24 @@ export class ChunkEdge extends RenderController {
     }
 
     public render() {
-        const REND_POS = convertToCameraSpace(new Vec2(this.chunkPos.x * TOTAL_CHUNK_SIZE, this.chunkPos.y * TOTAL_CHUNK_SIZE + (TOTAL_CHUNK_SIZE / 2) + (CHUNK_EDGE_HEIGHT / 2)));
+        const REND_POS = Camera.convertToCameraSpace(new Vec2(this.chunkPos.x * TOTAL_CHUNK_SIZE, this.chunkPos.y * TOTAL_CHUNK_SIZE + (TOTAL_CHUNK_SIZE / 2) + (CHUNK_EDGE_HEIGHT / 2)));
 
         // Render Chunk Edge
-        REND.noStroke();
-        REND.fill(CHUNK_EDGE_COLOUR);
-        REND.rectMode(REND.CENTER);
-        REND.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT);
+        render.noStroke();
+        render.fill(CHUNK_EDGE_COLOUR);
+        render.rectMode(render.CENTER);
+        render.rect(REND_POS.x, REND_POS.y, TOTAL_CHUNK_SIZE + CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT);
 
         // Render Particles
         this.particles.forEach((particle) => {
-            particle.pos = new Vec2(particle.pos.x, particle.pos.y + REND.sin(REND.frameCount * 0.03) * particle.speed * particle.direction);
+            particle.pos = new Vec2(particle.pos.x, particle.pos.y + render.sin(render.frameCount * 0.03) * particle.speed * particle.direction);
 
             const PARTICLE_REND_POS = new Vec2(REND_POS.x + particle.pos.x - (TOTAL_CHUNK_SIZE / 2), REND_POS.y + particle.pos.y);
 
-            REND.noStroke();
-            REND.fill(CHUNK_EDGE_COLOUR);
-            REND.rectMode(REND.CENTER);
-            REND.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
+            render.noStroke();
+            render.fill(CHUNK_EDGE_COLOUR);
+            render.rectMode(render.CENTER);
+            render.rect(PARTICLE_REND_POS.x, PARTICLE_REND_POS.y, particle.size, particle.size);
         });
     }
 }
