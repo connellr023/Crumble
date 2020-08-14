@@ -3,7 +3,8 @@
  * @author Connell Reffo
  */
 
-import { Player, RocketProjectile } from "./gameobjects";
+import Player from "./gameobjects/player";
+import Rocket from "./gameobjects/rocket";
 
 /**
  * Maximum Length for Player Name
@@ -31,6 +32,16 @@ export const PLAYER_SPEED = 10;
 export const ROCKET_SPEED = 20;
 
 /**
+ * Offset of Chunk Hitbox Width
+ */
+export const CHUNK_WIDTH_OFFSET = 45;
+
+/**
+ * Offset of Chunk Hitbox Height and Vertical Position
+ */
+export const CHUNK_HEIGHT_OFFSET = 35;
+
+/**
  * Size of a Chunk in Tiles
  */
 export const CHUNK_SIZE = 4;
@@ -39,6 +50,11 @@ export const CHUNK_SIZE = 4;
  * Defines the Hitbox Size of a Map Chunk
  */
 export const TOTAL_CHUNK_SIZE = 230;
+
+/**
+ * Size of a Tile
+ */
+export const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
 
 /**
  * Warning Time Before a Tile Destroys
@@ -68,12 +84,20 @@ export const TICK_MS = 100;
 /**
  * Force of Knockback from Handrocket Shot
  */
-export const HANDROCKET_KNOCKBACK_FORCE = 3;
+export const HANDROCKET_KNOCKBACK_FORCE = 4;
 
 /**
  * Port that the Main Crumble Server will Run on
  */
 export const PORT = 8000;
+
+/**
+ * Dimensions of a Destroyed Tile's Hitbox
+ */
+export const TILE_DIMENSIONS = {
+    width: 13,
+    height: 3
+}
 
 /**
  * Defines the Dimension of a Player on the Server Side
@@ -146,16 +170,15 @@ export interface IConnectedPlayer {
  * Represents a Rocket Projectile Object
  */
 export interface IProjectile {
-    [instanceId: string]: RocketProjectile
+    [instanceId: string]: Rocket
 }
 
 /**
- * Represents Obstruction Data Used to Determine Where a Player Can Move
+ * Represents Obstruction Data Used to When the Player is Off the Map Boundries
  */
 export interface IPlayerObstructionData {
     withinMap: boolean,
-    fellOffFront: boolean,
-    playerCollisionDir: Directions
+    onFront: boolean
 }
 
 /**
@@ -185,42 +208,9 @@ export function randomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export class Collider {
-    public pos: Vec2;
-    public width: number;
-    public height: number;
-
-    constructor(pos: Vec2, width: number, height: number) {
-        this.pos = pos;
-        this.width = width;
-        this.height = height;
-    }
-
-    public static isColliding(col1: Collider, col2: Collider): boolean {
-
-        // X Boundries
-        const X1 = col1.pos.x - col1.width / 2;
-        const X2 = col1.pos.x + col1.width / 2;
-
-        // Y Boundreis
-        const Y1 = col1.pos.y - col1.height / 2;
-        const Y2 = col1.pos.y + col1.height / 2;
-
-        // Check if Colliding
-        if (col2.pos.x + (col2.width / 2) >= X1 && col2.pos.x - (col2.width / 2) <= X2) {
-            if (col2.pos.y - (col2.height / 2) <= Y2 && col2.pos.y + (col2.height / 2) >= Y1) {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-}
-
+/**
+ * Represents a 2D Position
+ */
 export class Vec2 {
     public x: number;
     public y: number;

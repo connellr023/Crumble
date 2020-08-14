@@ -4,10 +4,10 @@
  * @author Connell Reffo
  */
 
-import Player from "./renderers/player";
-import Rocket from "./renderers/rocket";
+import Player from "./gameobjects/player";
+import Rocket from "./gameobjects/rocket";
 
-import { Chunk, ChunkEdge } from "./renderers/chunk";
+import { Chunk, ChunkEdge } from "./gameobjects/chunk";
 
 /**
  * Path Where Crumble Graphics Assets are Stored

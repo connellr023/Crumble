@@ -8,12 +8,12 @@ import { mousePos } from "./renderer";
 import { startGame, convertToCameraSpace } from "./game";
 import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData } from "./utils";
 
-import Player from "./renderers/player";
-import Rocket from "./renderers/rocket";
-import RenderController from "./renderers/controller";
+import Player from "./gameobjects/player";
+import Rocket from "./gameobjects/rocket";
+import RenderController from "./gameobjects/controller";
 
-import { Chunk } from "./renderers/chunk";
-import { TileDestroyParticles } from "./renderers/particles"
+import { Chunk } from "./gameobjects/chunk";
+import { TileDestroyParticles } from "./gameobjects/particles"
 
 import $ from "jquery";
 import io from "socket.io-client";

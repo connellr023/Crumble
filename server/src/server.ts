@@ -3,8 +3,9 @@
  * @author Connell Reffo
  */
 
-import { Game, activeGames } from "./game";
 import { PORT, MAX_ACTIVE_GAMES } from "./utils";
+
+import Game, { activeGames } from "./game";
 
 import * as cors from "cors";
 import * as express from "express";

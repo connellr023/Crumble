@@ -6,7 +6,7 @@
 import { clientSocketId, connectedPlayers } from "./socket";
 import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH } from "./utils";
 
-import RenderController from "./renderers/controller";
+import RenderController from "./gameobjects/controller";
 import p5 from "p5";
 
 /**
