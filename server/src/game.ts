@@ -157,7 +157,7 @@ export default class Game {
             this.destroyedTiles.push(tilePos);
 
             // Create Destroyed Tile Collider
-            const TILE_COLLIDER_POS = new Vec2(tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), tilePos.y * TILE_SIZE - (TILE_SIZE * 2));
+            const TILE_COLLIDER_POS = new Vec2(tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), tilePos.y * TILE_SIZE - (TILE_SIZE * 1.5) + 8);
 
             new Collider(TILE_COLLIDER_POS, TILE_DIMENSIONS.width, TILE_DIMENSIONS.height, CollisionSources.DESTROYED_TILE, this.lobbyId);
 

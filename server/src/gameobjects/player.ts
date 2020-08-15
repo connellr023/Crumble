@@ -88,9 +88,19 @@ export default class Player {
         for (let key in COLLISIONS) {
             if (COLLISIONS[key].source === CollisionSources.DESTROYED_TILE) {
                 obstructionData = {
-                    withinMap: false,
+                    withinMap: true,
                     onFront: false
                 };
+
+                // Off of Map Conditions Based on the Players Relative Position to the Destroyed Tile
+                const PLAYER_BELOW = (COLLISIONS[key].pos.y < this.pos.y - (PLAYER_DIMENSIONS.height * 1.05));
+                const PLAYER_ABOVE = (COLLISIONS[key].pos.y > this.pos.y + (PLAYER_DIMENSIONS.height * 0.3));
+                const PLAYER_LEFT = (COLLISIONS[key].pos.x < this.pos.x - (PLAYER_DIMENSIONS.width * 3));
+                const PLAYER_RIGHT = (COLLISIONS[key].pos.x > this.pos.x + (PLAYER_DIMENSIONS.width * 3));
+
+                if (PLAYER_RIGHT || PLAYER_LEFT || PLAYER_ABOVE || PLAYER_BELOW) {
+                    obstructionData.withinMap = false;
+                }
 
                 break;
             }

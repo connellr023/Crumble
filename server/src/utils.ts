@@ -96,8 +96,8 @@ export const PORT = 8000;
  * Dimensions of a Destroyed Tile's Hitbox
  */
 export const TILE_DIMENSIONS = {
-    width: 13,
-    height: 3
+    width: 7,
+    height: 16
 }
 
 /**
@@ -105,7 +105,7 @@ export const TILE_DIMENSIONS = {
  */
 export const PLAYER_DIMENSIONS = {
     width: 42,
-    height: 70
+    height: 75
 }
 
 /**
