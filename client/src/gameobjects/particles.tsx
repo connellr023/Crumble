@@ -22,19 +22,17 @@ function randomSpeed(speed: number): number {
  */
 export class TileDestroyParticles extends RenderController {
     public tilePos: Vec2;
-    public stopParticles: boolean;
     
     private particles: Array<IParticle> = [];
-    private particleCount: number = 12;
-    private particleSpeedMultiplier: number;
+    private particleCount: number = 8;
     
-    private minParticleSize: number = 8;
+    private minParticleSize: number = 9;
     private maxParticleSize: number = 12;
 
     private minLifetime: number = 30;
-    private maxLifetime: number = 80;
+    private maxLifetime: number = 50;
 
-    private baseSpeed: number = 25;
+    private baseSpeed: number = 140;
 
     /**
      * @param tilePos Position of Destroyed Tile
@@ -43,8 +41,6 @@ export class TileDestroyParticles extends RenderController {
         super();
 
         this.tilePos = tilePos;
-        this.stopParticles = false;
-        this.particleSpeedMultiplier = 1;
 
         this.setRenderLayer(4);
         this.initParticles();
@@ -79,31 +75,15 @@ export class TileDestroyParticles extends RenderController {
             render.rect(REND_POS.x + particle.pos.x + (particle.direction.run * 0.4), REND_POS.y + particle.pos.y + (particle.direction.rise * 0.4), particle.size, particle.size);
 
             if (particle.lifetimeFrames >= particle.maxLifetimeFrames) {
-                if (!this.stopParticles) {
-                    particle.pos = this.tilePos;
-                    particle.size = randomInt(this.minParticleSize, this.maxParticleSize);
-                    particle.maxLifetimeFrames = randomInt(this.minLifetime, this.maxLifetime);
-                    particle.lifetimeFrames = 0;
-                    particle.direction = {
-                        rise: randomSpeed(this.baseSpeed),
-                        run: randomSpeed(this.baseSpeed)
-                    }
-                }
-                else {
-                    this.particleSpeedMultiplier = 4;
-
-                    if (this.particles.length > 0) {
-                        this.particles = this.particles.filter((part) => {
-                            return part !== particle;
-                        });
-                    }
-                }
+                this.particles = this.particles.filter((part) => {
+                    return part !== particle;
+                });
             }
             else if (particle.lifetimeFrames >= particle.maxLifetimeFrames - particle.size) {
                 particle.size--;
             }
 
-            particle.pos = new Vec2(particle.pos.x + (particle.direction.run * this.particleSpeedMultiplier), particle.pos.y + (particle.direction.rise * this.particleSpeedMultiplier));
+            particle.pos = new Vec2(particle.pos.x + particle.direction.run, particle.pos.y + particle.direction.rise);
             particle.lifetimeFrames++;
         });
 
@@ -121,10 +101,10 @@ export class MuzzleBlastParticles extends RenderController {
     public pos: Vec2;
 
     private particles: Array<IParticle> = [];
-    private particleCount: number = 12;
+    private particleCount: number = 9;
 
-    private minParticleSize: number = 9;
-    private maxParticleSize: number = 12;
+    private minParticleSize: number = 8;
+    private maxParticleSize: number = 11;
 
     private baseSpeed: number = 60;
 
@@ -197,7 +177,7 @@ export class SmokeTrailParticles extends RenderController {
     public stopParticles: boolean;
 
     private particles: Array<IParticle> = [];
-    private particleCount: number = 10;
+    private particleCount: number = 8;
     
     private minParticleSize: number = 8;
     private maxParticleSize: number = 11;
@@ -289,10 +269,10 @@ export class ExplodeParticles extends RenderController {
     public pos: Vec2;
 
     private particles: Array<IParticle> = [];
-    private particleCount: number = 10;
+    private particleCount: number = 6;
     
-    private minParticleSize: number = 8;
-    private maxParticleSize: number = 11;
+    private minParticleSize: number = 10;
+    private maxParticleSize: number = 12;
 
     private minLifetime: number = 20;
     private maxLifetime: number = 35;

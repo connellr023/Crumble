@@ -4,17 +4,18 @@
  */
 
 import { render } from "../game";
-import { randomInt, Vec2, CHUNK_SIZE, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT, CHUNK_EDGE_COLOUR, CHUNK_GROUND_COLOUR, TILE_SIZE } from "../utils";
+import { randomInt, Vec2, CHUNK_SIZE, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT, CHUNK_EDGE_COLOUR } from "../utils";
 
 import Camera from "./camera";
 import RenderController from "./controller";
+import Tile from "./tile";
 
 /**
  * Level Chunk Renderer
  */
-export class Chunk extends RenderController {
+export class Chunk {
     public chunkPos: Vec2;
-    public tiles: Array<{pos: Vec2, destroyed: boolean}>;
+    public tiles: Array<Tile>;
 
     public chunkEdge: ChunkEdge | undefined;
 
@@ -22,13 +23,10 @@ export class Chunk extends RenderController {
      * @param chunkPos Position to Render Chunk at
      */
     constructor(chunkPos: Vec2) {
-        super();
-
         this.chunkPos = chunkPos;
         this.tiles = [];
         this.chunkEdge = undefined;
 
-        this.setRenderLayer(3);
         this.initTiles();
     }
 
@@ -39,27 +37,9 @@ export class Chunk extends RenderController {
         for (let y = 0; y < CHUNK_SIZE; y++) {
             for (let x = 0; x < CHUNK_SIZE; x++) {
                 const TILE_POS = new Vec2(x + (this.chunkPos.x * CHUNK_SIZE), y + (this.chunkPos.y * CHUNK_SIZE));
-
-                this.tiles.push({
-                    pos: TILE_POS,
-                    destroyed: false
-                });
+                this.tiles.push(new Tile(TILE_POS));
             }
         }
-    }
-
-    public render() {
-        // Render Chunk Ground
-        this.tiles.forEach((tile) => {
-            if (!tile.destroyed) {
-                const REND_POS = Camera.convertToCameraSpace(new Vec2(tile.pos.x * TILE_SIZE - (TILE_SIZE * 1.5), tile.pos.y * TILE_SIZE - (TILE_SIZE * 1.5)));
-
-                render.noStroke();
-                render.fill(CHUNK_GROUND_COLOUR);
-                render.rectMode(render.CENTER);
-                render.rect(REND_POS.x, REND_POS.y, TILE_SIZE + CHUNK_SIZE_PADDING, TILE_SIZE + CHUNK_SIZE_PADDING);
-            }
-        });
     }
 }
 
@@ -70,7 +50,7 @@ export class ChunkEdge extends RenderController {
     public chunkPos: Vec2;
 
     private particles: Array<{pos: Vec2, size: number, speed: number, direction: number}> = [];
-    private particleCount: number = 7;
+    private particleCount: number = 5;
 
     /**
      * @param chunkPos Position of Chunk to Place Edge At

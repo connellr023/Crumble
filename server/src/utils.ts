@@ -20,7 +20,7 @@ export const MAX_ACTIVE_GAMES = 5;
 /**
  * The Maximum Value for a Rocket's Lifetime Variable before Self Destruction
  */
-export const MAX_ROCKET_LIFETIME = 20;
+export const MAX_ROCKET_LIFETIME = 17;
 
 /**
  * Movement Speed of Players
@@ -30,7 +30,7 @@ export const PLAYER_SPEED = 10;
 /**
  * Speed of a Rocket Projectile
  */
-export const ROCKET_SPEED = 20;
+export const ROCKET_SPEED = 28.7;
 
 /**
  * Offset of Chunk Hitbox Width
@@ -60,12 +60,12 @@ export const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
 /**
  * Warning Time Before a Tile Destroys
  */
-export const TILE_DESTROY_WARNING_MS = 1500;
+export const TILE_DESTROY_WARNING_MS = 2000;
 
 /**
  * Cooldown Time Between Rockets being Fires by a Single Player
  */
-export const SHOOT_COOLDOWN_MS = 1300;
+export const SHOOT_COOLDOWN_MS = 600;
 
 /**
  * Amount of Ticks Between Tile Destruction
@@ -88,24 +88,38 @@ export const TICK_MS = 100;
 export const HANDROCKET_KNOCKBACK_FORCE = 4;
 
 /**
+ * Force of Knockback When Hit by a Rocket
+ */
+export const ROCKET_HIT_KNOCKBACK_FORCE = 5.5;
+
+/**
  * Port that the Main Crumble Server will Run on
  */
 export const PORT = 8000;
 
 /**
+ * Hitbox Dimensions of a Rocket
+ */
+export const ROCKET_HITBOX = {
+    width: 4,
+    height: 4
+}
+
+/**
  * Dimensions of a Destroyed Tile's Hitbox
  */
-export const TILE_DIMENSIONS = {
-    width: 7,
-    height: 16
+export const TILE_HITBOX = {
+    width: 18,
+    height: 18
 }
 
 /**
  * Defines the Dimension of a Player on the Server Side
  */
-export const PLAYER_DIMENSIONS = {
+export const PLAYER_HITBOX = {
     width: 42,
-    height: 75
+    height: 75,
+    vertOffset: 8
 }
 
 /**
@@ -229,6 +243,18 @@ export class Vec2 {
     constructor (x: number, y: number) {
         this.x = x;
         this.y = y;
+    }
+
+    /**
+     * Calculates the Distance Between Different 2D Vectors
+     * @param point1 Is the First Vector
+     * @param point2 Is the Second Vector
+     */
+    public static distance(point1: Vec2, point2: Vec2) {
+        const X = Math.pow(point2.x - point1.x, 2);
+        const Y  = Math.pow(point2.y - point1.y, 2);
+
+        return Math.sqrt(X + Y);
     }
 
     /**

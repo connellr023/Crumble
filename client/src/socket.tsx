@@ -6,7 +6,7 @@
 import { displayWinner } from "./interface";
 import { mousePos } from "./renderer";
 import { startGame } from "./game";
-import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData } from "./utils";
+import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData, ITileDestroyedData } from "./utils";
 
 import Camera from "./gameobjects/camera";
 import Player from "./gameobjects/player";
@@ -14,7 +14,6 @@ import Rocket from "./gameobjects/rocket";
 import RenderController from "./gameobjects/controller";
 
 import { Chunk } from "./gameobjects/chunk";
-import { TileDestroyParticles } from "./gameobjects/particles"
 
 import $ from "jquery";
 import io from "socket.io-client";
@@ -23,6 +22,11 @@ import io from "socket.io-client";
  * Client Socket Connection
  */
 let socket: SocketIOClient.Socket;
+
+/**
+ * Event Listener That Handles Mouse Movement
+ */
+let mouseMovementTracker: () => void;
 
 /**
  * Socket ID of the Current Client
@@ -81,7 +85,7 @@ function handleInput() {
 
     let canShoot = true;
 
-    document.addEventListener("mousemove", () => {
+    mouseMovementTracker = () => {
         const PLAYER_REND_POS = Camera.convertToCameraSpace(connectedPlayers[clientSocketId].pos);
 
         let handrocketAngle: HandrocketAngles;
@@ -116,7 +120,9 @@ function handleInput() {
 
         lastHandrocketAngle = handrocketAngle;
         lastFacingDir = facingDir;
-    });
+    }
+
+    document.addEventListener("mousemove", mouseMovementTracker);
 
     inputUpdateInterval = setInterval(() => {
 
@@ -217,7 +223,6 @@ export function handleClientSocket(name: string, lobbyId: string) {
         console.log(`Player of Socket ID "${socketId}" has Left`);
 
         connectedPlayers[socketId].destroy();
-        delete connectedPlayers[socketId];
     });
 
     // Game Events
@@ -233,6 +238,7 @@ export function handleClientSocket(name: string, lobbyId: string) {
     socket.on(GameEvents.PLAYER_DIED, (deathInfo: IPlayerDeathData) => {
         if (connectedPlayers[clientSocketId].socketId === deathInfo.socketId) {
             clearInterval(inputUpdateInterval);
+            document.removeEventListener("mousemove", mouseMovementTracker);
         }
 
         // Trigger On Death Event
@@ -253,32 +259,35 @@ export function handleClientSocket(name: string, lobbyId: string) {
     });
 
     // Tile Destroy Event
-    socket.on(GameEvents.TILE_DESTROYED, (tilePos: Vec2) => {
-        const PARTICLES = new TileDestroyParticles(tilePos);
+    socket.on(GameEvents.TILE_DESTROYED, (res: ITileDestroyedData) => {
+        let destroyTime = 0;
 
-        setTimeout(() => {
-            PARTICLES.stopParticles = true;
+        if (!res.instant) {
+            destroyTime = TILE_DESTROY_WARNING_MS;
+        }
 
-            // Modify Tile Variable in Chunk
-            for (let chunkKey in loadedChunks) {
-                const CHUNK = loadedChunks[chunkKey];
+        // Loop Through All Chunks to Find Tile
+        for (let chunkKey in loadedChunks) {
+            const CHUNK = loadedChunks[chunkKey];
 
-                for (let tileKey in CHUNK.tiles) {
-                    const TILE = CHUNK.tiles[tileKey];
+            // Loop Through Each Tile in Chunk
+            for (let tileKey in CHUNK.tiles) {
+                const TILE = CHUNK.tiles[tileKey];
 
-                    if (TILE.pos.x === tilePos.x && TILE.pos.y === tilePos.y) {
-                        loadedChunks[chunkKey].tiles[tileKey].destroyed = true;
+                if (TILE.tilePos.x === res.pos.x && TILE.tilePos.y === res.pos.y) {
 
-                        break;
-                    }
+                    // Destroy Correct Tile
+                    loadedChunks[chunkKey].tiles[tileKey].destroy(destroyTime);
+                    break;
                 }
             }
-        }, TILE_DESTROY_WARNING_MS);
+        }
     });
 
     // On Player Win Event
     socket.on(GameEvents.PLAYER_WON, (socketId: string) => {
         clearInterval(inputUpdateInterval);
+        document.removeEventListener("mousemove", mouseMovementTracker);
     
         setTimeout(() => {
             displayWinner(connectedPlayers[socketId].name, clientSocketId === socketId);

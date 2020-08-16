@@ -52,7 +52,6 @@ div.content-wrapper {
     padding: 10px;
     height: fit-content;
     width: fit-content;
-
     position: absolute;
     top: calc(50% - 95px);
     left: calc(50% - 166px);

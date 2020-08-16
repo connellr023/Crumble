@@ -4,9 +4,9 @@
  */
 
 import { IO } from "./server";
-import { Vec2, ILevelMap, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_DIMENSIONS, PLAYER_DIMENSIONS, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
-import { Collider, CollisionSources } from "./collision";
+import { Vec2, ILevelMap, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
 
+import Collider, { CollisionSources } from "./collision";
 import Player from "./gameobjects/player";
 
 import * as socketIo from "socket.io";
@@ -30,12 +30,12 @@ export default class Game {
     public namespace: socketIo.Namespace;
 
     public loadedMap: ILevelMap;
+
+    public availableTiles: Array<Vec2> = [];
+    public destroyedTiles: Array<Vec2> = []; 
     
     private ticker: NodeJS.Timeout;
     private ticks: number = 0;
-
-    private availableTiles: Array<Vec2> = [];
-    private destroyedTiles: Array<Vec2> = []; 
 
     constructor() {
 
@@ -72,19 +72,21 @@ export default class Game {
      * Initializes Player Spawn Points
      */
     private initPlayerSpawns() {
-        for (let chunkKey = 0; chunkKey< this.loadedMap.chunks.length; chunkKey++) {
+        for (let chunkKey = 0; chunkKey < this.loadedMap.chunks.length; chunkKey++) {
+
+            // Register Chunk Colliders
+            const CHUNK_POS = this.loadedMap.chunks[chunkKey];
+            const CHUNK_COL = new Collider(new Vec2(CHUNK_POS.x * TOTAL_CHUNK_SIZE, CHUNK_POS.y * TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET), TOTAL_CHUNK_SIZE + CHUNK_WIDTH_OFFSET, TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET, CollisionSources.CHUNK, this.lobbyId);
+
             if (chunkKey < Object.keys(this.players).length) {
-                const CHUNK_POS = this.loadedMap.chunks[chunkKey];
                 const SPAWN_POS = new Vec2(CHUNK_POS.x * TOTAL_CHUNK_SIZE, CHUNK_POS.y * TOTAL_CHUNK_SIZE);
 
                 const PLAYER_KEY = Object.keys(this.players)[chunkKey];
 
                 // Set Position
                 this.players[PLAYER_KEY].pos = SPAWN_POS;
-                this.players[PLAYER_KEY].collider.pos = SPAWN_POS;
-            }
-            else {
-                break;
+                this.players[PLAYER_KEY].collider.pos = new Vec2(SPAWN_POS.x, SPAWN_POS.y - PLAYER_HITBOX.vertOffset);
+                this.players[PLAYER_KEY].lastChunkCollider = CHUNK_COL;
             }
         }
     }
@@ -94,15 +96,11 @@ export default class Game {
      */
     private registerChunkTiles() {
         this.loadedMap.chunks.forEach((chunk) => {
-
-            // Register Chunk Colliders
-            new Collider(new Vec2(chunk.x * TOTAL_CHUNK_SIZE, chunk.y * TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET), TOTAL_CHUNK_SIZE + CHUNK_WIDTH_OFFSET, TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET, CollisionSources.CHUNK, this.lobbyId);
-
+            
             // Generate Tiles
             for (let y = 0; y < CHUNK_SIZE; y++) {
                 for (let x = 0; x < CHUNK_SIZE; x++) {
                     const TILE_POS = new Vec2(x + (chunk.x * CHUNK_SIZE), y + (chunk.y * CHUNK_SIZE));
-
                     this.availableTiles.push(TILE_POS);
                 }
             }
@@ -142,11 +140,25 @@ export default class Game {
     /**
      * Destroys a Tile at a Given Position
      * @param tilePos Position of Tile to Destroy
+     * @param instant If Tile Will Crumble Instantly
      */
-    private destroyTile(tilePos: Vec2) {
-        this.loadedMap.destroyedTiles.push(tilePos);
-        this.namespace.emit(GameEvents.TILE_DESTROYED, tilePos);
+    public destroyTile(tilePos: Vec2, instant: boolean) {
+        let destroyTime = 0;
 
+        if (!instant) {
+            destroyTime = TILE_DESTROY_WARNING_MS;
+
+        }
+
+        this.loadedMap.destroyedTiles.push(tilePos);
+
+        // Tell Clients Tile is Destroyed
+        this.namespace.emit(GameEvents.TILE_DESTROYED, {
+            pos: tilePos,
+            instant: instant
+        });
+
+        // Remove from List of Available Tiles
         this.availableTiles = this.availableTiles.filter((tile) => {
             return tile != tilePos;
         });
@@ -157,15 +169,17 @@ export default class Game {
             this.destroyedTiles.push(tilePos);
 
             // Create Destroyed Tile Collider
-            const TILE_COLLIDER_POS = new Vec2(tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), tilePos.y * TILE_SIZE - (TILE_SIZE * 1.5) + 8);
+            const TILE_COLLIDER_POS = new Vec2(tilePos.x * TILE_SIZE - (TILE_SIZE * 1.5), tilePos.y * TILE_SIZE - (TILE_SIZE * 1.5) + 9);
 
-            new Collider(TILE_COLLIDER_POS, TILE_DIMENSIONS.width, TILE_DIMENSIONS.height, CollisionSources.DESTROYED_TILE, this.lobbyId);
+            new Collider(TILE_COLLIDER_POS, TILE_HITBOX.width, TILE_HITBOX.height, CollisionSources.DESTROYED_TILE, this.lobbyId);
 
             // Check if Player(s) Should be Dead
             for (let socketId in this.players) {
-                this.players[socketId].checkDeath();
+                if (Vec2.distance(this.players[socketId].pos, TILE_COLLIDER_POS) < 35) {
+                    this.players[socketId].die(false);
+                }
             }
-        }, TILE_DESTROY_WARNING_MS);
+        }, destroyTime);
     }
     
     /**
@@ -296,29 +310,12 @@ export default class Game {
             const TILE_POS = this.availableTiles[RAND_TILE_INDEX];
 
             if (TILE_POS != null) {
-                this.destroyTile(TILE_POS);
+                this.destroyTile(TILE_POS, false);
             }
         }
         else if (this.ticks % ROCKET_UPDATE_TICKS === 0) { // Rocket Projectile Movement
             for (let instanceId in this.rockets) {
-
-                // Check Rocket Lifetime
-                if (this.rockets[instanceId].lifetime < MAX_ROCKET_LIFETIME) {
-
-                    // Increment Lifetime Counter
-                    this.rockets[instanceId].lifetime++;
-
-                    // Move Rocket on Server Side
-                    this.rockets[instanceId].move();
-                }
-                else {
-
-                    // Tell Clients Rocket is Destroyed
-                    this.namespace.emit(GameEvents.ROCKET_EXPLODE, instanceId);
-
-                    // Delete Server Side Rocket Instance
-                    delete this.rockets[instanceId];
-                }  
+                this.rockets[instanceId].tick();
             }
         }
     }

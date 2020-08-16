@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { Vec2, FacingDirections, HandrocketAngles, Directions, GameEvents, SocketEvents, IPlayerObstructionData, PLAYER_SPEED, PLAYER_DIMENSIONS, HANDROCKET_KNOCKBACK_FORCE, SHOOT_COOLDOWN_MS, TOTAL_CHUNK_SIZE, CHUNK_HEIGHT_OFFSET } from "../utils";
-import { Collider, CollisionSources } from "../collision";
+import { Vec2, FacingDirections, HandrocketAngles, Directions, GameEvents, SocketEvents, IPlayerObstructionData, PLAYER_SPEED, PLAYER_HITBOX, HANDROCKET_KNOCKBACK_FORCE, SHOOT_COOLDOWN_MS, TOTAL_CHUNK_SIZE, CHUNK_HEIGHT_OFFSET } from "../utils";
 
+import Collider, { CollisionSources } from "../collision";
 import Game, { activeGames } from "../game";
 import Rocket from "./rocket";
 
@@ -26,7 +26,7 @@ export default class Player {
 
     public collider: Collider;
 
-    private lastChunkCollider: Collider;
+    public lastChunkCollider: Collider;
 
     /**
      * @param name Name of Player
@@ -47,7 +47,8 @@ export default class Player {
         this.canShoot = true;
 
         // Set Collider
-        this.collider = new Collider(this.pos, PLAYER_DIMENSIONS.width, PLAYER_DIMENSIONS.height, CollisionSources.PLAYER, this.game.lobbyId);
+        this.collider = new Collider(this.pos, PLAYER_HITBOX.width, PLAYER_HITBOX.height, CollisionSources.PLAYER, this.game.lobbyId);
+        this.collider.parentObject = this;
     }
 
     /**
@@ -81,7 +82,7 @@ export default class Player {
         if (activeGames[this.game.lobbyId] !== undefined) {
 
             // Check if Player Was on the Front or Back of the Chunk
-            obstructionData.onFront = (this.pos.y > this.lastChunkCollider.pos.y + PLAYER_DIMENSIONS.height);
+            obstructionData.onFront = (this.pos.y > this.lastChunkCollider.pos.y + PLAYER_HITBOX.height);
         }
 
         // Check if Player is Touching a Destroyed Tile
@@ -93,10 +94,10 @@ export default class Player {
                 };
 
                 // Off of Map Conditions Based on the Players Relative Position to the Destroyed Tile
-                const PLAYER_BELOW = (COLLISIONS[key].pos.y < this.pos.y - (PLAYER_DIMENSIONS.height * 1.05));
-                const PLAYER_ABOVE = (COLLISIONS[key].pos.y > this.pos.y + (PLAYER_DIMENSIONS.height * 0.3));
-                const PLAYER_LEFT = (COLLISIONS[key].pos.x < this.pos.x - (PLAYER_DIMENSIONS.width * 3));
-                const PLAYER_RIGHT = (COLLISIONS[key].pos.x > this.pos.x + (PLAYER_DIMENSIONS.width * 3));
+                const PLAYER_BELOW = (COLLISIONS[key].pos.y < this.pos.y - (PLAYER_HITBOX.height * 1.05));
+                const PLAYER_ABOVE = (COLLISIONS[key].pos.y > this.pos.y + (PLAYER_HITBOX.height * 0.4));
+                const PLAYER_LEFT = (COLLISIONS[key].pos.x < this.pos.x - (PLAYER_HITBOX.width * 2));
+                const PLAYER_RIGHT = (COLLISIONS[key].pos.x > this.pos.x + (PLAYER_HITBOX.width * 2));
 
                 if (PLAYER_RIGHT || PLAYER_LEFT || PLAYER_ABOVE || PLAYER_BELOW) {
                     obstructionData.withinMap = false;
@@ -111,24 +112,32 @@ export default class Player {
     }
 
     /**
+     * Kills the Current Player Instance
+     * @param fellOffFront If the Player Fell Off the Front of the Map
+     */
+    public die(fellOffFront: boolean) {
+        this.dead = true;
+
+        // Sync Death with Clients
+        this.game.namespace.emit(GameEvents.PLAYER_DIED, {
+            socketId: this.socketId,
+            fellOffFront: fellOffFront
+        });
+
+        // Check if Game Should End
+        if (this.game.getAlivePlayersSocketId().length < 2) {
+            this.game.checkWinner();
+        }
+    }
+
+    /**
      * Checks if the Current Player Instance Should be Dead
      */
     public checkDeath() {
         const WITHIN_MAP = this.isWithinMap();
 
         if (!WITHIN_MAP.withinMap) {
-            this.dead = true;
-
-            // Sync Death with Clients
-            this.game.namespace.emit(GameEvents.PLAYER_DIED, {
-                socketId: this.socketId,
-                fellOffFront: WITHIN_MAP.onFront
-            });
-
-            // Check if Game Should End
-            if (this.game.getAlivePlayersSocketId().length < 2) {
-                this.game.checkWinner();
-            }
+            this.die(WITHIN_MAP.onFront);
         }
     }
 
@@ -202,15 +211,10 @@ export default class Player {
             const INSTANCE_ID = Object.keys(this.game.players).length;
             const DIRECTION = new Vec2(knockbackVector.x * -1, knockbackVector.y * -1);
 
-            this.game.rockets[INSTANCE_ID] = new Rocket(new Vec2(this.pos.x + (DIRECTION.x * ROCKET_SPAWN_OFFSET), this.pos.y + (DIRECTION.y * ROCKET_SPAWN_OFFSET)), DIRECTION, INSTANCE_ID);
+            this.game.rockets[INSTANCE_ID] = new Rocket(new Vec2(this.pos.x + (DIRECTION.x * ROCKET_SPAWN_OFFSET), this.pos.y + (DIRECTION.y * ROCKET_SPAWN_OFFSET)), DIRECTION, INSTANCE_ID, this.game);
 
             // Apply Knockback if Not Colliding
             this.knockback(HANDROCKET_KNOCKBACK_FORCE, horKnockbackDir, vertKnockbackDir);
-
-            // Check if Player Boosted Off of the Map
-            setTimeout(() => {
-                this.checkDeath();
-            }, 35);
 
             // Server Side Shoot Cooldown
             setTimeout(() => {
@@ -237,7 +241,7 @@ export default class Player {
 
                 // Determine Direction Player Can Move in
                 if (movementDir === Directions.RIGHT || movementDir === Directions.LEFT) {
-                    const ON_TOP = (Math.abs(this.collider.pos.y - collider.pos.y) - 10 <= PLAYER_DIMENSIONS.height / 2);
+                    const ON_TOP = (Math.abs(this.collider.pos.y - collider.pos.y) - 10 <= PLAYER_HITBOX.height / 2);
 
                     if (this.collider.pos.x >= collider.pos.x && ON_TOP) {
                         movementDir = Directions.RIGHT
@@ -247,7 +251,7 @@ export default class Player {
                     }
                 }
                 else {
-                    const ON_SIDE = (Math.abs(this.collider.pos.x - collider.pos.x) <= PLAYER_DIMENSIONS.width / 2);
+                    const ON_SIDE = (Math.abs(this.collider.pos.x - collider.pos.x) <= PLAYER_HITBOX.width / 2);
 
                     if (this.collider.pos.y >= collider.pos.y && ON_SIDE) {
                         movementDir = Directions.DOWN
@@ -291,7 +295,7 @@ export default class Player {
             }
 
             // Adjust Position of Collider
-            this.collider.pos = this.pos;
+            this.collider.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_HITBOX.vertOffset);
 
             // Sync Position with Clients
             this.game.namespace.emit(GameEvents.PLAYER_MOVE, {
@@ -342,12 +346,17 @@ export default class Player {
         }
 
         // Adjust Position of Collider
-        this.collider.pos = this.pos;
+        this.collider.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_HITBOX.vertOffset);
 
         // Sync Position with Clients
         this.game.namespace.emit(GameEvents.PLAYER_MOVE, {
             socketId: this.socketId,
             pos: this.pos
         });
+
+        // Check if Player Boosted Off of the Map
+        setTimeout(() => {
+            this.checkDeath();
+        }, 35);
     }
 }

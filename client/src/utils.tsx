@@ -10,6 +10,68 @@ import Rocket from "./gameobjects/rocket";
 import { Chunk, ChunkEdge } from "./gameobjects/chunk";
 
 /**
+ * Represents an RGB Colour Code
+ */
+export class RGBColourCode {
+    public r: number;
+    public g: number;
+    public b: number;
+
+    /**
+     * @param r Red Channel
+     * @param g Green Channel
+     * @param b Blue Channel
+     */
+    constructor(r: number, g: number, b: number) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+
+    /**
+     * Lerps Between 2 Different Colours
+     */
+    public static lerp(start: RGBColourCode, end: RGBColourCode, amount: number): RGBColourCode {
+        amount /= 10;
+
+        function lerpNum(s: number, e: number) {
+            return (1 - amount) * s + amount * e;
+        }
+
+        return new RGBColourCode(Math.floor(lerpNum(start.r, end.r)), Math.floor(lerpNum(start.g, end.g)), Math.floor(lerpNum(start.b, end.b)));
+    }
+}
+
+/**
+ * Represents a 2D Position
+ */
+export class Vec2 {
+    public x: number;
+    public y: number;
+
+    public static zero: Vec2 = new Vec2(0, 0);
+
+    /**
+     * @param x X Position
+     * @param y Y Position
+     */
+    constructor (x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Lerps Between 2 Different Vectors
+     * @param start Start Vector
+     * @param end End Vector
+     * @param amount Lerp Amount
+     */
+    public static lerp(start: Vec2, end: Vec2, amount: number): Vec2 {
+        return new Vec2((1 - amount) * start.x + amount * end.x, (1 - amount) * start.y + amount * end.y);
+    }
+}
+
+/**
  * Path Where Crumble Graphics Assets are Stored
  */
 export let GRAPHICS_PATH = process.env.PUBLIC_URL + "/graphics/";
@@ -27,7 +89,12 @@ export const BG_COLOUR = "#181425";
 /**
  * Colour of Chunk Ground
  */
-export const CHUNK_GROUND_COLOUR = "#c0cbdc";
+export const TILE_NORMAL_COLOUR = new RGBColourCode(192, 203, 220);
+
+/**
+ * Colour of Chunk Ground When About to be Destroyed
+ */
+export const TILE_WEAK_COLOUR = new RGBColourCode(162, 38, 51);
 
 /**
  * Colour of Chunk Edge
@@ -37,7 +104,7 @@ export const CHUNK_EDGE_COLOUR = "#8b9bb4";
 /**
  * Colour of Tile Destruction Particles
  */
-export const TILE_DESTROY_PARTICLE_COLOUR = "#b55088";
+export const TILE_DESTROY_PARTICLE_COLOUR = "#5a6988";
 
 /**
  * Colour of Muzzle Blast Particles
@@ -82,7 +149,7 @@ export const PLAYER_HANDROCKET_OFFSET = 22;
 /**
  * Speed of Rocket on the Client Side
  */
-export const CLIENT_ROCKET_SPEED = 3.3;
+export const CLIENT_ROCKET_SPEED = 4.7;
 
 /**
  * Lowest Render Layer (Bottom)
@@ -127,12 +194,12 @@ export const SEND_INPUT_MS = 100;
 /**
  * Warning Time Before a Tile Destroys
  */
-export const TILE_DESTROY_WARNING_MS = 1500;
+export const TILE_DESTROY_WARNING_MS = 2000;
 
 /**
  * Cooldown Time Between Rockets being Fires by the Current Player
  */
-export const SHOOT_COOLDOWN_MS = 1300;
+export const SHOOT_COOLDOWN_MS = 600;
 
 /**
  * The Middleground Between Cursor being Considered Above or Below Player
@@ -170,35 +237,6 @@ export const HANDROCKET_DIMENSIONS = {
     vertOffsetDown: 14,
     vertOffsetNormal: 8
 };
-
-/**
- * Represents a 2D Position
- */
-export class Vec2 {
-    public x: number;
-    public y: number;
-
-    public static zero: Vec2 = new Vec2(0, 0);
-
-    /**
-     * @param x X Position
-     * @param y Y Position
-     */
-    constructor (x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /**
-     * Lerps Between 2 Different Vectors
-     * @param start Start Vector
-     * @param end End Vector
-     * @param amount Lerp Amount
-     */
-    public static lerp(start: Vec2, end: Vec2, amount: number): Vec2 {
-        return new Vec2((1 - amount) * start.x + amount * end.x, (1 - amount) * start.y + amount * end.y);
-    }
-}
 
 /**
  * Data Attributed with an Individual Particle
@@ -245,6 +283,14 @@ export interface IPlayerData {
     socketId?: string
     name: string,
     pos: Vec2
+}
+
+/**
+ * Represents Tile Destruction Data Sent from Server
+ */
+export interface ITileDestroyedData {
+    pos: Vec2,
+    instant: boolean
 }
 
 /**

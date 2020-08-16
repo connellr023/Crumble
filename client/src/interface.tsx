@@ -82,7 +82,6 @@ export function displayWinner(name: string, won: boolean) {
         $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
     }
 
-    $("canvas").css("filter", "blur(4px)");
     $("#winner-txt").text(`< ${name.toUpperCase()} WINS >`);
     $("#win-screen-container").css("display", "block");
 }

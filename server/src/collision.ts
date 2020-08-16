@@ -6,13 +6,16 @@
 import { activeGames } from "./game";
 import { Vec2 } from "./utils";
 
+import Player from "./gameobjects/player";
+
 /**
  * Represents Possible Collision Sources
  */
 export enum CollisionSources {
     PLAYER = "player",
     DESTROYED_TILE = "destroyedtile",
-    CHUNK = "chunk"
+    CHUNK = "chunk",
+    ROCKET = "rocket"
 }
 
 /**
@@ -52,11 +55,13 @@ export class CollisionManager {
 /**
  * Represents a Collider Instance
  */
-export class Collider {
+export default class Collider {
     public pos: Vec2;
     public width: number;
     public height: number;
     public source: CollisionSources;
+
+    public parentObject: Player;
 
     private lobbyId: string;
 
@@ -66,6 +71,7 @@ export class Collider {
      * @param height Height of Collider
      * @param source Is The Source of the Collider
      * @param lobbyId Is the Lobby ID of the Game That this Collider Belongs to
+     * @param vertOffset Is the Vertical Offset for the Collider
      */
     constructor(pos: Vec2, width: number, height: number, source: CollisionSources, lobbyId: string) {
         this.pos = pos;

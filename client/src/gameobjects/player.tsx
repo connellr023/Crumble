@@ -247,7 +247,7 @@ export default class Player extends RenderController {
     public render() {
 
         // Lerp Position
-        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.2);
+        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.15);
 
         const REND_POS = Camera.convertToCameraSpace(this.pos);
 
@@ -316,7 +316,7 @@ export default class Player extends RenderController {
             this.state = PlayerAnimationStates.IDLE;
 
             // Animate Falling Player
-            if (render.frameCount % 10 === 0) {
+            if (render.frameCount % 12 === 0) {
                 this.frame++;
 
                 if (this.frame > PLAYER_FALL_DIMENSIONS.frames - 1) {
