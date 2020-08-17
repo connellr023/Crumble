@@ -50,7 +50,7 @@ export const CHUNK_SIZE = 4;
 /**
  * Defines the Hitbox Size of a Map Chunk
  */
-export const TOTAL_CHUNK_SIZE = 230;
+export const TOTAL_CHUNK_SIZE = 235;
 
 /**
  * Size of a Tile
@@ -109,8 +109,8 @@ export const ROCKET_HITBOX = {
  * Dimensions of a Destroyed Tile's Hitbox
  */
 export const TILE_HITBOX = {
-    width: 18,
-    height: 18
+    width: 17,
+    height: 17
 }
 
 /**
@@ -119,7 +119,7 @@ export const TILE_HITBOX = {
 export const PLAYER_HITBOX = {
     width: 42,
     height: 75,
-    vertOffset: 8
+    vertOffset: 6
 }
 
 /**

@@ -46,6 +46,9 @@ export default class Rocket extends RenderController {
         // Instantiate Explosion Particles
         new ExplodeParticles(this.pos);
 
+        // Camera Shake
+        Camera.shake(3, 7);
+
         // Delete Current Render Controller
         RenderController.remove(this);
     }

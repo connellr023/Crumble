@@ -38,7 +38,7 @@ export default class Tile extends RenderController {
      * Destroys rhe Current Tile Instance
      * @param ms Milliseconds Before the Tile Explodes
      */
-    public destroy(ms: number) {
+    public async destroy(ms: number) {
         let interval: NodeJS.Timeout;
 
         this.weak = true;
@@ -64,7 +64,11 @@ export default class Tile extends RenderController {
             clearInterval(interval);
             this.invisible = true;
 
+            // Create Explosion Particles
             new TileDestroyParticles(this.tilePos);
+
+            // Camera Shake
+            Camera.shake(3.5, 9);
         }, ms);
     }
 

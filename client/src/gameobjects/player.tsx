@@ -316,7 +316,7 @@ export default class Player extends RenderController {
             this.state = PlayerAnimationStates.IDLE;
 
             // Animate Falling Player
-            if (render.frameCount % 12 === 0) {
+            if (render.frameCount % 10 === 0) {
                 this.frame++;
 
                 if (this.frame > PLAYER_FALL_DIMENSIONS.frames - 1) {

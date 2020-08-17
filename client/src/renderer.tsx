@@ -3,17 +3,11 @@
  * @author Connell Reffo
  */
 
-import { clientSocketId, connectedPlayers } from "./socket";
-import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, TOTAL_CHUNK_SIZE, GRAPHICS_PATH, PLAYER_FALL_DIMENSIONS } from "./utils";
+import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, GRAPHICS_PATH, PLAYER_FALL_DIMENSIONS } from "./utils";
 
 import Camera from "./gameobjects/camera";
 import RenderController from "./gameobjects/controller";
 import p5 from "p5";
-
-/**
- * Position of the Mouse on the Canvas
- */
-export let mousePos = Vec2.zero;
 
 /**
  * Tracks Assets tp be Used in Game Rendering
@@ -24,6 +18,11 @@ export let assets = {
     PLAYER_FALL_SPRITESHEET: [] as Array<p5.Image>,
     PLAYER_SHADOW: new p5.Image()
 };
+
+/**
+ * Position of the Mouse on the Canvas
+ */
+export let mousePos: Vec2;
 
 /**
  * Splits a Spritesheet Horizontally
@@ -53,6 +52,9 @@ export function game(p: p5) {
     let handrocketSpritesheet: p5.Image;
 
     p.preload = () => {
+
+        // Initialize Mouse Position
+        mousePos = Vec2.zero;
 
         // Load Assets
         playerSpritesheet = p.loadImage(GRAPHICS_PATH + "player.png");
@@ -87,14 +89,13 @@ export function game(p: p5) {
     }
 
     p.draw = () => {
+        
+        // Clear Canvas
+        p.clear();
         p.background(BG_COLOUR);
 
-        // Make Camera Lock to Player Chunk Pos
-        if (!connectedPlayers[clientSocketId].dead) {
-            const LERP_POS = Vec2.lerp(Camera.pos, new Vec2(connectedPlayers[clientSocketId].currentChunk.x * TOTAL_CHUNK_SIZE, connectedPlayers[clientSocketId].currentChunk.y * TOTAL_CHUNK_SIZE), 0.1);
-
-            Camera.pos = LERP_POS;
-        }
+        // Update Camera
+        Camera.update();
 
         // Render All Render Controllers
         RenderController.renderAllControllers();

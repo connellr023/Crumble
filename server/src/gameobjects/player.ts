@@ -94,10 +94,10 @@ export default class Player {
                 };
 
                 // Off of Map Conditions Based on the Players Relative Position to the Destroyed Tile
-                const PLAYER_BELOW = (COLLISIONS[key].pos.y < this.pos.y - (PLAYER_HITBOX.height * 1.05));
-                const PLAYER_ABOVE = (COLLISIONS[key].pos.y > this.pos.y + (PLAYER_HITBOX.height * 0.4));
+                const PLAYER_BELOW = (COLLISIONS[key].pos.y < this.pos.y - (PLAYER_HITBOX.height * 1.2));
+                const PLAYER_ABOVE = (COLLISIONS[key].pos.y > this.pos.y + (PLAYER_HITBOX.height * 0.3));
                 const PLAYER_LEFT = (COLLISIONS[key].pos.x < this.pos.x - (PLAYER_HITBOX.width * 2));
-                const PLAYER_RIGHT = (COLLISIONS[key].pos.x > this.pos.x + (PLAYER_HITBOX.width * 2));
+                const PLAYER_RIGHT = (COLLISIONS[key].pos.x > this.pos.x + (PLAYER_HITBOX.width * 1.7));
 
                 if (PLAYER_RIGHT || PLAYER_LEFT || PLAYER_ABOVE || PLAYER_BELOW) {
                     obstructionData.withinMap = false;
