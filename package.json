@@ -1,0 +1,8 @@
+{
+    "name": "crumble-server-production",
+    "version": "1.0.0",
+    "main": "./server/src/server.ts",
+    "scripts": {
+        "start": "ts-node ./server/src/server.ts"
+    }
+}
