@@ -95,7 +95,7 @@ export const ROCKET_HIT_KNOCKBACK_FORCE = 5.5;
 /**
  * Port that the Main Crumble Server will Run on
  */
-export const PORT = 8000;
+export const PORT = 8000 || process.env.PORT;
 
 /**
  * Hitbox Dimensions of a Rocket
