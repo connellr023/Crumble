@@ -6,55 +6,104 @@
     outline: none;
 }
 
+html {
+    background-size: 300px;
+    background-image: url("../assets/checker.png");
+    background-repeat: repeat;
+    background-color: #181425;
+    bottom: 0;
+    image-rendering: pixelated;
+}
+
+canvas {
+    margin-top: 5px;
+}
+
 body {
-    background-color: #121212;
     margin: auto;
+    margin-top: -5px;
+    text-align: center;
 }
 
 input.standard-input {
-    background-color: #131313;
+    background-color: #181425;
     border: none;
     color: lightgrey;
     font-family: "Crumble";
     font-size: 30px;
     margin: auto;
     padding: 6px;
-    transition: 0.4s;
+    transition: 0.2s;
 }
 
 input.standard-input:focus {
-    background-color: #0e0e0e;
-    transition: 0.4s;
+    background-color: #3a4466;
+    transition: 0.2s;
 }
 
 button.standard-btn {
-    color: rgb(53, 176, 98);
+    color: #5a6988;
     cursor: pointer;
     border: none;
-    background-color: #131313;
+    background-color: #181425;
     font-family: "Crumble";
     font-size: 30px;
     text-align: center;
-    transition: 0.4s;
+    transition: 0.2s;
     padding-bottom: 4px;
     padding-top: 4px;
 }
 
 button.standard-btn:hover {
-    color: rgb(45, 233, 167);
-    background-color: #0e0e0e;
-    transition: 0.4s;
+    background-color: #3a4466;
+    transition: 0.2s;
+}
+
+div.hlink {
+    background-color: #3a4466;
+    color: #c0cbdc;
+    font-family: "Crumble";
+    font-size: 30px;
+    margin-top: 8px;
+    padding-bottom: 2px;
+    padding-top: 2px;
+    text-align: center;
+    transition: 0.3s;
+    width: 100%;
+}
+
+div.info-txt {
+    color: #c0cbdc;
+    font-family: "Crumble";
+    font-size: 26px;
+    letter-spacing: 0.25px;
+    max-width: 450px;
+}
+
+div.hlink:hover {
+    color: #8b9bb4;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+div.content-wrapper-container {
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    height: 100%;
 }
 
 div.content-wrapper {
-    background-color: #1c1c1c;
+    background-color: #262b44;
+    border: 5px solid #181425;
     text-align: center;
     padding: 10px;
     height: fit-content;
     width: fit-content;
     position: absolute;
-    top: calc(50% - 95px);
-    left: calc(50% - 166px);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 div.title-txt {
@@ -66,9 +115,43 @@ div.title-txt {
 }
 
 div.subtitle-txt {
-    color: rgb(140, 140, 140);
+    color: #feae34;
     font-family: "Crumble";
     font-size: 30px;
+}
+
+div#dev-name {
+    bottom: 10px;
+    color: #c0cbdc;
+    font-family: "Crumble";
+    font-size: 25px;
+    left: 12px;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+}
+
+button#leave-game {
+    background-color: rgba(0, 0, 0, 0);
+    border: 3px solid #e43b44;
+    color: #e43b44;
+    font-family: "Crumble";
+    font-size: 30px;
+    top: 11px;
+    text-align: center;
+    transition: 0.4s;
+    left: 11px;
+    padding: 4px;
+    position: absolute;
+    z-index: 1;
+}
+
+button#leave-game:hover {
+    border-color: #a22633;
+    cursor: pointer;
+    color: #a22633;
+    position: absolute;
+    transition: 0.4s;
 }
 
 button#exit-win-screen-btn {
@@ -95,10 +178,11 @@ button#exit-win-screen-btn:hover {
 
 div#win-screen-container {
     background-color: rgba(0, 0, 0, 0.7);
+    bottom: 0;
     position: fixed;
     width: 100%;
     height: 100%;
-    z-index: 1;
+    z-index: 2;
 }
 
 div#winner-txt {
@@ -117,6 +201,7 @@ div#client-msg {
     font-family: "Crumble";
     font-size: 30px;
     margin-bottom: 8px;
+    margin-left: 6px;
     width: 300px;
 }
 
@@ -128,6 +213,10 @@ button#name-conf, button#cancel-queue {
 input#name-input {
     text-align: center;
     width: 300px;
+}
+
+::-webkit-input-placeholder {
+    color: #5a6988;
 }
 
 ::-webkit-scrollbar {

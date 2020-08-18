@@ -299,7 +299,7 @@ export interface ITileDestroyedData {
 export interface IGameData {
     start: boolean,
     level?: ILevelMap,
-    players?: object
+    players?: IPlayerData
 }
 
 /**
@@ -331,6 +331,7 @@ export interface ILevelMap {
  */
 export enum SocketEvents {
     CONNECTED = "connect",
+    DISCONNECT = "disconnect",
     REGISTER = "register",
     PLAYER_LEAVE = "leave",
     START_GAME = "startgame",

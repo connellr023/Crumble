@@ -19,6 +19,15 @@ export function setEnteredQueue(value: boolean) {
 }
 
 /**
+ * Switches to a Different Content Area
+ * @param id The ID of the Content Wrapper Element
+ */
+export function displayContentArea(id: string) {
+    $(".content-wrapper").hide();
+    $(`#${id}`).css("display", "block");
+}
+
+/**
  * Displays a Message Under the Crumble Title Element on the Main Screen
  * @param message Message to Dispay to the Client
  */
@@ -26,7 +35,11 @@ export function displayClientMsg(message: string) {
     const $clientMsg = $("#client-msg");
 
     $clientMsg.css("display", "block");
-    $clientMsg.text(message);
+    $clientMsg.text(message.toUpperCase());
+
+    setTimeout(() => {
+        $clientMsg.hide();
+    }, message.length * 110);
 }
 
 /**
@@ -62,7 +75,7 @@ export function connectToLobby() {
                     }
                 },
                 error: (error) => {
-                    console.log(`ERROR: ${error}`);
+                    displayClientMsg("500: Internal Server Error");
                 }
             });
         }
@@ -82,6 +95,20 @@ export function displayWinner(name: string, won: boolean) {
         $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
     }
 
+    $("#leave-game").hide();
     $("#winner-txt").text(`< ${name.toUpperCase()} WINS >`);
+    $("#win-screen-container").css("display", "block");
+}
+
+/**
+ * Displays a Connection Error for the Client
+ * @param error Error Message to Display
+ */
+export function displayConnectionError(error: string) {
+    $("#leave-game").hide();
+
+    $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
+    $("#winner-txt").text(error.toUpperCase());
+
     $("#win-screen-container").css("display", "block");
 }

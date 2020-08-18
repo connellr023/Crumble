@@ -4,7 +4,6 @@
  */
 
 import { Vec2 } from "./utils";
-import { inputUpdateInterval } from "./socket";
 import { game } from "./renderer";
 
 import Camera from "./gameobjects/camera";
@@ -22,17 +21,28 @@ Camera.pos = Vec2.zero;
 export let render: p5;
 
 /**
+ * Background Scroll Position
+ */
+let scrollY = 0;
+
+/**
+ * Background Scroll Effect Interval
+ */
+let backgroundScroll = setInterval(() => {
+    $("html").css("background-position-y", `${scrollY}px`);
+
+    scrollY += 0.1;
+}, 1);
+
+/**
  * Starts Game
  */
 export function startGame() {
-    render = new p5(game);
-    $("canvas").css("display", "block");
-}
+    clearInterval(backgroundScroll);
 
-/**
- * Stops Game
- */
-export function stopGame() {
-    clearInterval(inputUpdateInterval);
-    $("canvas").remove();
+    render = new p5(game);
+
+    $("canvas").css("display", "block");
+    $("#leave-game").css("display", "block");
+    $("html").css("background-image", "none");
 }

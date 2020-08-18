@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { displayWinner } from "./interface";
+import { displayWinner, displayConnectionError } from "./interface";
 import { mousePos } from "./renderer";
 import { startGame } from "./game";
 import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData, ITileDestroyedData } from "./utils";
@@ -175,6 +175,14 @@ export function handleClientSocket(name: string, lobbyId: string) {
         console.log(`Connected to Lobby: ${lobbyId}`);
         
         socket.emit(SocketEvents.REGISTER, name);
+    });
+
+    // Disconnect Event
+    socket.on(SocketEvents.DISCONNECT, () => {
+        clearInterval(inputUpdateInterval);
+        document.removeEventListener("mousemove", mouseMovementTracker);
+
+        displayConnectionError("Lost Connection to Server");
     });
 
     // Recieve Socket ID Event

@@ -4,16 +4,17 @@
  */
 
 import { Vec2, RGBColourCode, TILE_NORMAL_COLOUR, TILE_WEAK_COLOUR, TILE_SIZE, CHUNK_SIZE_PADDING } from "../utils";
+import { TileDestroyParticles } from "./particles";
 import { render } from "../game";
 
 import Camera from "./camera";
 import RenderController from "./controller";
-import { TileDestroyParticles } from "./particles";
 
+/**
+ * Tile Renderer
+ */
 export default class Tile extends RenderController {
     public tilePos: Vec2;
-
-    private weak: boolean;
 
     private fadeColour: RGBColourCode;
     private renderColour: RGBColourCode;
@@ -25,8 +26,6 @@ export default class Tile extends RenderController {
         super();
 
         this.tilePos = tilePos;
-
-        this.weak = false;
 
         this.renderColour = TILE_NORMAL_COLOUR;
         this.fadeColour = this.renderColour;
@@ -40,8 +39,6 @@ export default class Tile extends RenderController {
      */
     public async destroy(ms: number) {
         let interval: NodeJS.Timeout;
-
-        this.weak = true;
 
         // Flash Effect
         if (ms > 0) {
