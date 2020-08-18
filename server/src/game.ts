@@ -4,22 +4,24 @@
  */
 
 import { IO } from "./server";
-import { Vec2, ILevelMap, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, TOTAL_CHUNK_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
+import { Vec2, ILevel, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, CHUNK_HITBOX_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
 
 import Collider, { CollisionSources } from "./collision";
 import Player from "./gameobjects/player";
+import LevelManager from "./gameobjects/level";
 
 import * as socketIo from "socket.io";
-
-/**
- * Tracks all active online games
- */
-export let activeGames: IActiveGame = {};
 
 /**
  * Represents an Instance of an Online Crumble Match
  */
 export default class Game {
+
+    /**
+     * Tracks all active online games
+     */
+    public static activeGames: IActiveGame = {};
+
     public lobbyId: string;
     public maxPlayers = 2;
 
@@ -29,7 +31,7 @@ export default class Game {
 
     public namespace: socketIo.Namespace;
 
-    public loadedMap: ILevelMap;
+    public loadedMap: ILevel;
 
     public availableTiles: Array<Vec2> = [];
     public destroyedTiles: Array<Vec2> = []; 
@@ -40,17 +42,17 @@ export default class Game {
     constructor() {
 
         // Load Map
-        this.loadedMap = TEST_MAP;
+        this.loadedMap = LevelManager.randomLevel();
         
         // Generate Lobby ID
-        this.lobbyId = Object.keys(activeGames).length + randomInt(0, 100).toString();
+        this.lobbyId = Object.keys(Game.activeGames).length + randomInt(0, 100).toString();
     }
 
     /**
      * Registers the Current Game Instance as Active
      */
     public registerActiveGame() {
-        activeGames[this.lobbyId] = this;
+        Game.activeGames[this.lobbyId] = this;
         console.log(`[+] Opened Game "${this.lobbyId}"`);
         
         this.namespace = IO.of(`/lobbies/${this.lobbyId}`);
@@ -76,10 +78,10 @@ export default class Game {
 
             // Register Chunk Colliders
             const CHUNK_POS = this.loadedMap.chunks[chunkKey];
-            const CHUNK_COL = new Collider(new Vec2(CHUNK_POS.x * TOTAL_CHUNK_SIZE, CHUNK_POS.y * TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET), TOTAL_CHUNK_SIZE + CHUNK_WIDTH_OFFSET, TOTAL_CHUNK_SIZE - CHUNK_HEIGHT_OFFSET, CollisionSources.CHUNK, this.lobbyId);
+            const CHUNK_COL = new Collider(new Vec2(CHUNK_POS.x * CHUNK_HITBOX_SIZE, CHUNK_POS.y * CHUNK_HITBOX_SIZE - CHUNK_HEIGHT_OFFSET), CHUNK_HITBOX_SIZE + CHUNK_WIDTH_OFFSET, CHUNK_HITBOX_SIZE - CHUNK_HEIGHT_OFFSET, CollisionSources.CHUNK, this.lobbyId);
 
             if (chunkKey < Object.keys(this.players).length) {
-                const SPAWN_POS = new Vec2(CHUNK_POS.x * TOTAL_CHUNK_SIZE, CHUNK_POS.y * TOTAL_CHUNK_SIZE);
+                const SPAWN_POS = new Vec2(CHUNK_POS.x * CHUNK_HITBOX_SIZE, CHUNK_POS.y * CHUNK_HITBOX_SIZE);
 
                 const PLAYER_KEY = Object.keys(this.players)[chunkKey];
 
@@ -132,7 +134,7 @@ export default class Game {
 
         // Delete Current Game
         delete IO.nsps[this.namespace.name];
-        delete activeGames[this.lobbyId];
+        delete Game.activeGames[this.lobbyId];
 
         console.log(`[x] Closed Lobby "${this.lobbyId}"`);
     }

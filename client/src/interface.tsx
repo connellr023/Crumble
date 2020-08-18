@@ -105,10 +105,16 @@ export function displayWinner(name: string, won: boolean) {
  * @param error Error Message to Display
  */
 export function displayConnectionError(error: string) {
-    $("#leave-game").hide();
+    if (!enteredQueue) {
+        $("#leave-game").hide();
 
-    $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
-    $("#winner-txt").text(error.toUpperCase());
+        $("#winner-txt").css("color", NAMETAG_ENEMY_COLOUR);
+        $("#winner-txt").text(error.toUpperCase());
 
-    $("#win-screen-container").css("display", "block");
+        $("#win-screen-container").css("display", "block");
+    }
+    else {
+        $("#player-waiting").text(error.toUpperCase());
+        $("#player-waiting").css("color", NAMETAG_ENEMY_COLOUR);
+    }
 }

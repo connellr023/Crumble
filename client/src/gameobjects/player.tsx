@@ -166,8 +166,10 @@ export default class Player extends RenderController {
 
         this.setRenderLayer(renderLayer);
 
+        const REND_POS = Camera.convertToCameraSpace(this.pos);
+
         const DEATH_INTERVAL = setInterval(() => {
-            if (this.serverPos.y >= 610) {
+            if (REND_POS.y >= 610) {
                 clearInterval(DEATH_INTERVAL);
             }
 

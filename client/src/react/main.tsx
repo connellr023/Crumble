@@ -49,7 +49,7 @@ class Main extends React.Component {
 
                 <div className="content-wrapper" id="match-wait-menu" style={{display: "none"}}>
                     <div className="title-txt">&lt; CRUMBLE &gt;</div>
-                    <div className="subtitle-txt">WAITING FOR PLAYER(S)...</div>
+                    <div className="subtitle-txt" id="player-waiting">WAITING FOR PLAYER(S)...</div>
                     <button className="standard-btn" id="cancel-queue" onClick={() => window.location.reload()}>CANCEL QUEUE</button>
                 </div>
             </div>

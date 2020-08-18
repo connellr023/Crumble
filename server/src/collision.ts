@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { activeGames } from "./game";
 import { Vec2 } from "./utils";
 
+import Game from "./game";
 import Player from "./gameobjects/player";
 
 /**
@@ -82,10 +82,10 @@ export default class Collider {
         this.lobbyId = lobbyId;
 
         // Check if Game is Still Active
-        if (activeGames[this.lobbyId] !== undefined) {
+        if (Game.activeGames[this.lobbyId] !== undefined) {
 
             // Register Collider With Collision Manager
-            activeGames[this.lobbyId].colliders.push(this);
+            Game.activeGames[this.lobbyId].colliders.push(this);
         }
     } 
 
@@ -96,10 +96,10 @@ export default class Collider {
         let collisions: Array<Collider> = [];
 
         // Check if Game Has Ended
-        if (activeGames[this.lobbyId] !== undefined) {
+        if (Game.activeGames[this.lobbyId] !== undefined) {
 
             // Process Collisions
-            activeGames[this.lobbyId].colliders.forEach((collider) => {
+            Game.activeGames[this.lobbyId].colliders.forEach((collider) => {
                 if (collider !== this && CollisionManager.isColliding(this, collider)) {
                     collisions.push(collider);
                 }

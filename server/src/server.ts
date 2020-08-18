@@ -5,7 +5,7 @@
 
 import { PORT, MAX_ACTIVE_GAMES } from "./utils";
 
-import Game, { activeGames } from "./game";
+import Game from "./game";
 
 import * as cors from "cors";
 import * as express from "express";
@@ -38,7 +38,7 @@ function getAvailableLobby(): string {
     function openGame(): string {
 
         // Check if the Limit of Concurrently Running Games is Reached
-        if (Object.keys(activeGames).length < MAX_ACTIVE_GAMES) {
+        if (Object.keys(Game.activeGames).length < MAX_ACTIVE_GAMES) {
 
             // Create a New Match
             const GAME_INSTANCE = new Game();
@@ -53,11 +53,11 @@ function getAvailableLobby(): string {
     }
 
     // Check if there are no Current Matches
-    if (Object.keys(activeGames).length > 0) {
+    if (Object.keys(Game.activeGames).length > 0) {
 
         // Check if Match is Waiting for Player
-        for (let activeGame in activeGames) {
-            let game = activeGames[activeGame];
+        for (let activeGame in Game.activeGames) {
+            let game = Game.activeGames[activeGame];
 
             if (Object.keys(game.players).length < game.maxPlayers) {
                 return game.lobbyId;

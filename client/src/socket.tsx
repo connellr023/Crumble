@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { displayWinner, displayConnectionError } from "./interface";
+import { displayWinner, displayConnectionError, setEnteredQueue } from "./interface";
 import { mousePos } from "./renderer";
 import { startGame } from "./game";
 import { IGameData, IPlayerData, IPlayerDeathData, SocketEvents, GameEvents, Directions, Vec2, SEND_INPUT_MS, TILE_DESTROY_WARNING_MS, generateChunkEdges, CURSOR_MIDDLE_DEADSPACE, HandrocketAngles, IAngleChangeData, FacingDirections, SHOOT_COOLDOWN_MS, IConnectedPlayer, IProjectile, IRocketData, ITileDestroyedData } from "./utils";
@@ -193,6 +193,8 @@ export function handleClientSocket(name: string, lobbyId: string) {
     // Register Event
     socket.on(SocketEvents.START_GAME, (gameData: IGameData) => {
         if (gameData.start) {
+            setEnteredQueue(false);
+
             $("#name-choose-menu").css("display", "none");
             $("#match-wait-menu").css("display", "none");
 

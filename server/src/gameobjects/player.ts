@@ -3,10 +3,10 @@
  * @author Connell Reffo
  */
 
-import { Vec2, FacingDirections, HandrocketAngles, Directions, GameEvents, SocketEvents, IPlayerObstructionData, PLAYER_SPEED, PLAYER_HITBOX, HANDROCKET_KNOCKBACK_FORCE, SHOOT_COOLDOWN_MS, TOTAL_CHUNK_SIZE, CHUNK_HEIGHT_OFFSET } from "../utils";
+import { Vec2, FacingDirections, HandrocketAngles, Directions, GameEvents, SocketEvents, IPlayerObstructionData, PLAYER_SPEED, PLAYER_HITBOX, HANDROCKET_KNOCKBACK_FORCE, SHOOT_COOLDOWN_MS, CHUNK_HITBOX_SIZE, CHUNK_HEIGHT_OFFSET } from "../utils";
 
 import Collider, { CollisionSources } from "../collision";
-import Game, { activeGames } from "../game";
+import Game from "../game";
 import Rocket from "./rocket";
 
 /**
@@ -79,7 +79,7 @@ export default class Player {
         }
 
         // Check if Game is Still Active
-        if (activeGames[this.game.lobbyId] !== undefined) {
+        if (Game.activeGames[this.game.lobbyId] !== undefined) {
 
             // Check if Player Was on the Front or Back of the Chunk
             obstructionData.onFront = (this.pos.y > this.lastChunkCollider.pos.y + PLAYER_HITBOX.height);
@@ -175,13 +175,10 @@ export default class Player {
                 case FacingDirections.LEFT:
                     knockbackVector.x = 1;
                     horKnockbackDir = Directions.RIGHT;
-
                     break;
-                
                 case FacingDirections.RIGHT:
                     knockbackVector.x = -1;
                     horKnockbackDir = Directions.LEFT;
-
                     break;
             }
 
@@ -190,19 +187,14 @@ export default class Player {
                 case HandrocketAngles.UP:
                     knockbackVector.y = 1;
                     vertKnockbackDir = Directions.DOWN;
-
                     break;
-                
                 case HandrocketAngles.DOWN:
                     knockbackVector.y = -1;
                     vertKnockbackDir = Directions.UP;
-
                     break;
-
                 default:
                     knockbackVector.y = 0;
                     vertKnockbackDir = null;
-
                     break;
             }
 

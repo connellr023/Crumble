@@ -50,12 +50,12 @@ export const CHUNK_SIZE = 4;
 /**
  * Defines the Hitbox Size of a Map Chunk
  */
-export const TOTAL_CHUNK_SIZE = 235;
+export const CHUNK_HITBOX_SIZE = 245;
 
 /**
  * Size of a Tile
  */
-export const TILE_SIZE = TOTAL_CHUNK_SIZE / CHUNK_SIZE;
+export const TILE_SIZE = CHUNK_HITBOX_SIZE / CHUNK_SIZE;
 
 /**
  * Warning Time Before a Tile Destroys
@@ -203,7 +203,7 @@ export interface IPlayerObstructionData {
 /**
  * Represents Data Required for a Crumble Level
  */
-export interface ILevelMap {
+export interface ILevel {
     chunks: Array<Vec2>,
     destroyedTiles: Array<Vec2>
 }
@@ -268,7 +268,7 @@ export class Vec2 {
 /**
  * Test
  */
-export const TEST_MAP: ILevelMap = {
+export const TEST_MAP: ILevel = {
     chunks: [
         new Vec2(0, 0),
         new Vec2(1, 0),
