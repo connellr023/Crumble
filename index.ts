@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { PORT, MAX_ACTIVE_GAMES } from "./utils";
+import { PORT, MAX_ACTIVE_GAMES } from "./server/utils";
 
-import Game from "./game";
+import Game from "./server/game";
 
 import * as cors from "cors";
 import * as express from "express";
@@ -78,7 +78,7 @@ function getAvailableLobby(): string {
 /**
  * Serve Client Web Page
  */
-APP.use("/", express.static(path.join(__dirname, "../../client/build")));
+APP.use("/", express.static(path.join(__dirname, "/client/build")));
 
 /**
  * Hooks a Client With a Lobby ID
