@@ -124,7 +124,7 @@ export const ROCKET_PROJECTILE_COLOUR = "#ff0044";
 /**
  * Nametag Colour for the Client Player
  */
-export const NAMETAG_SELF_COLOUR = "#63c74d";
+export const NAMETAG_SELF_COLOUR = "#1fad48";
 
 /**
  * Nametag Colour for the Opposing Player(s)

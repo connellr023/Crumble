@@ -25,7 +25,7 @@ export const MAX_ROCKET_LIFETIME = 17;
 /**
  * Movement Speed of Players
  */
-export const PLAYER_SPEED = 10;
+export const PLAYER_SPEED = 13;
 
 /**
  * Speed of a Rocket Projectile
@@ -35,7 +35,7 @@ export const ROCKET_SPEED = 28.7;
 /**
  * Offset of Chunk Hitbox Width
  */
-export const CHUNK_WIDTH_OFFSET = 45;
+export const CHUNK_WIDTH_OFFSET = 25;
 
 /**
  * Offset of Chunk Hitbox Height and Vertical Position
@@ -50,7 +50,7 @@ export const CHUNK_SIZE = 4;
 /**
  * Defines the Hitbox Size of a Map Chunk
  */
-export const CHUNK_HITBOX_SIZE = 245;
+export const CHUNK_HITBOX_SIZE = 240;
 
 /**
  * Size of a Tile
@@ -70,7 +70,7 @@ export const SHOOT_COOLDOWN_MS = 600;
 /**
  * Amount of Ticks Between Tile Destruction
  */
-export const DESTROY_TILE_TICKS = 130;
+export const DESTROY_TILE_TICKS = 50;
 
 /**
  * Amount of Ticks Between Rocket Projectile Position Updates

@@ -177,7 +177,7 @@ export default class Game {
 
             // Check if Player(s) Should be Dead
             for (let socketId in this.players) {
-                if (Vec2.distance(this.players[socketId].pos, TILE_COLLIDER_POS) < 35) {
+                if (Vec2.distance(this.players[socketId].pos, TILE_COLLIDER_POS) < 43) {
                     this.players[socketId].die(false);
                 }
             }

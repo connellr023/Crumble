@@ -1,10 +1,10 @@
 {
   "name": "crumble-server",
   "version": "1.0.0",
-  "main": "server.ts",
+  "main": "./src/server.ts",
   "scripts": {
-    "dev": "nodemon ./src/server.ts",
-    "final": "ts-node ./src/server.ts"
+    "start": "ts-node ./src/server.ts",
+    "dev": "nodemon ./src/server/ts"
   },
   "author": "Connell Reffo",
   "license": "ISC",
@@ -17,12 +17,9 @@
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
-    "fs": "0.0.1-security",
-    "nodemon": "^2.0.4",
     "socket.io": "^2.3.0",
     "ts-node": "^8.10.2",
     "tsc": "^1.20150623.0",
-    "tslint": "^5.12.1",
     "typescript": "^3.3.3"
   }
 }

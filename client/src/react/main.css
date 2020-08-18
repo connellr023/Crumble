@@ -59,6 +59,13 @@ button.standard-btn:hover {
     transition: 0.2s;
 }
 
+img.tut-img {
+    margin: 7px;
+    pointer-events: none;
+    width: 200px;
+    height: 200px;
+}
+
 div.hlink {
     background-color: #3a4466;
     color: #c0cbdc;
@@ -70,6 +77,17 @@ div.hlink {
     text-align: center;
     transition: 0.3s;
     width: 100%;
+}
+
+div.key-icon {
+    background-color: #181425;
+    color: #feae34;
+    display: inline-block;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    pointer-events: none;
+    margin-bottom: 10px;
 }
 
 div.info-txt {
@@ -120,6 +138,13 @@ div.subtitle-txt {
     font-size: 30px;
 }
 
+div#how-to-play-content {
+    border: 5px dashed #181425;
+    max-height: 300px;
+    padding: 3px;
+    overflow-y: scroll;
+}
+
 div#dev-name {
     bottom: 10px;
     color: #c0cbdc;
@@ -127,7 +152,7 @@ div#dev-name {
     font-size: 25px;
     left: 12px;
     pointer-events: none;
-    position: absolute;
+    position: fixed;
     z-index: 1;
 }
 
@@ -143,6 +168,9 @@ button#leave-game {
     left: 11px;
     padding: 4px;
     position: absolute;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
     z-index: 1;
 }
 

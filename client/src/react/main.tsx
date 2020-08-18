@@ -37,13 +37,35 @@ class Main extends React.Component {
 
                 <div className="content-wrapper" id="how-to-play-info" style={{display: "none"}}>
                     <div className="title-txt">&lt; HOW TO PLAY &gt;</div>
-                    <div className="info-txt">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Veniam fugiat quisquam hic repudiandae, ab velit odit obcaecati optio fuga quae nihil neque adipisci sit ad. Quasi, labore ullam? Ipsam, velit.</div><br />
+                    
+                    <div id="how-to-play-content">
+                        <div className="info-txt">The goal of Crumble is to be the final player standing. Parts of the level around you will crumble periodically indicated by a flashing red square.</div><br />
+                        <img className="tut-img" src={process.env.PUBLIC_URL + "/tutorial/tile_crumble.png"} alt="Tile Crumbling" /><br />
+
+                        <div className="info-txt">Players have the ability to fire rocket projectiles at certain angles. Upon impact, a rocket will knock them back as well as cause nearby tiles to instantly be destroyed. If a rocket hits a player, it will deal knockback as well destroy nearby tiles.</div>
+                        <img className="tut-img" src={process.env.PUBLIC_URL + "/tutorial/rocket_projectile.png"} alt="Moving Rocket Projectile" /><br />
+                        
+                        <div className="info-txt">In terms of elimination. You can die by either falling through a crumbled tile or by falling off the edge of the map.</div>
+                        <img className="tut-img" src={process.env.PUBLIC_URL + "/tutorial/falling_player.png"} alt="Falling Player" />
+
+                        <br />
+                    </div>
+                    
                     <button className="standard-btn" id="cancel-queue" onClick={() => {displayContentArea("name-choose-menu")}}>BACK</button>
                 </div>
 
                 <div className="content-wrapper" id="controls-info" style={{display: "none"}}>
                     <div className="title-txt">&lt; CONTROLS &gt;</div>
-                    <div className="info-txt">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorum atque fugiat accusamus at, ipsam id rem deserunt nisi, itaque dicta commodi repellendus deleniti in voluptates doloremque optio suscipit temporibus ex?</div><br />
+                    
+                    <div className="info-txt"><div className="key-icon">W</div> MOVES YOUR PLAYER UP</div>
+                    <div className="info-txt"><div className="key-icon">A</div> MOVES YOUR PLAYER LEFT</div>
+                    <div className="info-txt"><div className="key-icon">S</div> MOVES YOUR PLAYER DOWN</div>
+                    <div className="info-txt"><div className="key-icon">D</div> MOVES YOUR PLAYER RIGHT</div>
+
+                    <br />
+                    <div className="info-txt"><div className="key-icon">LEFT CLICK</div> SHOOTS A ROCKET</div>
+                    <div className="info-txt"><div className="key-icon">MOVE MOUSE</div> POINTS YOUR WEAPON</div>
+
                     <button className="standard-btn" id="cancel-queue" onClick={() => {displayContentArea("name-choose-menu")}}>BACK</button>
                 </div>
 

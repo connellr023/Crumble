@@ -42,7 +42,7 @@ export default abstract class LevelManager {
 
         let chunkPos = Vec2.zero;
     
-        for (let c = 0; c < level.length; c++) {
+        for (let c = 0; c < level.length - 1; c++) {
             if (chunkPos.x === MAP_WIDTH + 1) {
                 chunkPos.x = 0;
                 chunkPos.y++;
@@ -62,5 +62,22 @@ export default abstract class LevelManager {
 // Create Levels
 LevelManager.createLevel(`
 ###
-##
+## 
+`);
+
+LevelManager.createLevel(`
+###
+## 
+###
+`);
+
+LevelManager.createLevel(`
+###
+###
+`);
+
+LevelManager.createLevel(`
+###
+# #
+#  
 `);

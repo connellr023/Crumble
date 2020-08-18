@@ -41,9 +41,9 @@ export default class Player extends RenderController {
 
     private handrocketVertOffset: number;
 
-    private fallAcceleration = 0.65;
-    private fallVelocity: number = 8;
-    private fallTerminalVelocity: number = 40;
+    private fallAcceleration = 1.2;
+    private fallVelocity: number = 14;
+    private fallTerminalVelocity: number = 50;
 
     /**
      * @param name Name of the Player
@@ -102,6 +102,7 @@ export default class Player extends RenderController {
 
     /**
      * Sets the Angle the the Handrocket Should Point
+     * @param angle The Angle to Set the Handrocket to Point Towards
      */
     public setHandrocketAngle(angle: HandrocketAngles) {
         this.handrocket.setAngle(angle);
@@ -249,7 +250,7 @@ export default class Player extends RenderController {
     public render() {
 
         // Lerp Position
-        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.15);
+        this.pos = Vec2.lerp(this.pos, this.serverPos, 0.12);
 
         const REND_POS = Camera.convertToCameraSpace(this.pos);
 
@@ -293,7 +294,7 @@ export default class Player extends RenderController {
                         this.frame = 1;
                     }
 
-                    if (render.frameCount % 10 === 0) {
+                    if (render.frameCount % 9 === 0) {
                         if (this.frame >= PLAYER_DIMENSIONS.frames - 1) {
                             this.frame = 1;
                             this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;

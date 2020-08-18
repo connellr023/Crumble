@@ -11,6 +11,7 @@ import * as cors from "cors";
 import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as socketIo from "socket.io";
+import * as path from "path";
 
 export const APP = require("express")();
 export const ROUTER = express.Router({ caseSensitive: true });
@@ -73,6 +74,11 @@ function getAvailableLobby(): string {
         return openGame();
     }
 };
+
+/**
+ * Serve Client Web Page
+ */
+APP.use("/", express.static(path.join(__dirname, "../../client/build")));
 
 /**
  * Hooks a Client With a Lobby ID
