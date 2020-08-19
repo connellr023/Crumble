@@ -168,7 +168,7 @@ function handleInput() {
  * @param lobbyId The Lobby ID to Connect to
  */
 export function handleClientSocket(name: string, lobbyId: string) {
-    socket = io(`ws://${window.location.hostname}/lobbies/${lobbyId}`, {onlyBinaryUpgrades: true, transports: ["websocket"], upgrade: false});
+    socket = io(`ws://${window.location.hostname}/lobbies/${lobbyId}`);
 
     // Connection Event
     socket.on(SocketEvents.CONNECTED, () => {
