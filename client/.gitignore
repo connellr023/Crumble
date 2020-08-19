@@ -112,7 +112,6 @@ node_modules/
 /node_trace.*.log
 # coverage related
 /gcovr
-/build
 /coverage
 
 # === Rules for XCode artifacts ===
