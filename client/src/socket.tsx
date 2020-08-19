@@ -168,7 +168,16 @@ function handleInput() {
  * @param lobbyId The Lobby ID to Connect to
  */
 export function handleClientSocket(name: string, lobbyId: string) {
-    socket = io(`ws://${window.location.hostname}/lobbies/${lobbyId}`);
+    let protocol = "ws";
+
+    // Check if Application is in Production
+    if (process.env.NODE_ENV === "production") {
+
+        // Upgrade to WebSocket Secure Protocol
+        protocol = "wss";
+    }
+
+    socket = io(`${protocol}://${window.location.hostname}:${window.location.port}/lobbies/${lobbyId}`, { transports: ["websocket"], upgrade: false });
 
     // Connection Event
     socket.on(SocketEvents.CONNECTED, () => {

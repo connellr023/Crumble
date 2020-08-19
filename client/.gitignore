@@ -81,6 +81,7 @@ _UpgradeReport_Files/
 /deps/icu*.tgz
 /deps/icu-tmp
 /android-toolchain/
+/build
 
 package-lock.json
 node_modules/
