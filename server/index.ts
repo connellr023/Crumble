@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { PORT, MAX_ACTIVE_GAMES } from "./server/utils";
+import { PORT, MAX_ACTIVE_GAMES } from "./utils";
 
-import Game from "./server/game";
+import Game from "./game";
 
 import * as cors from "cors";
 import * as express from "express";
@@ -34,9 +34,9 @@ export const IO = socketIo.listen(SERVER, { httpCompression: false, transports: 
 /**
  * Finds an Availabl Lobby or Creates One and Returns the Lobby ID
  */
-function getAvailableLobby(): string {
+function getAvailableLobby(): string | null {
 
-    function openGame(): string {
+    function openGame(): string | null {
 
         // Check if the Limit of Concurrently Running Games is Reached
         if (Object.keys(Game.activeGames).length < MAX_ACTIVE_GAMES) {
@@ -83,7 +83,7 @@ APP.use("/", express.static(path.join(__dirname, "/client/build")));
 /**
  * Hooks a Client With a Lobby ID
  */
-ROUTER.post("/api/find-lobby", (req, res) => {
+ROUTER.post("/api/find-lobby", (_req, res) => {
     const LOBBY_ID = getAvailableLobby();
 
     res.send({

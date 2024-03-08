@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { IO } from "../index";
+import { IO } from "./index";
 import { Vec2, ILevel, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, CHUNK_HITBOX_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
 
 import Collider, { CollisionSources } from "./collision";
