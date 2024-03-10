@@ -21,7 +21,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "BUILD_PATH='../server/dist' react-scripts build",
+    "build": "BUILD_PATH='../server/src/dist' react-scripts build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

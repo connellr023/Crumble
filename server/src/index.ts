@@ -81,7 +81,11 @@ function getAvailableLobby(): string | null {
 /**
  * Serve Client Web Page
  */
-APP.use("/", express.static(path.join(__dirname, "../dist")));
+APP.use("/", express.static(path.join(__dirname, "dist")));
+
+APP.get("*", (_req, res): void => {
+    res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 /**
  * Hooks a Client With a Lobby ID
