@@ -25,7 +25,7 @@ export const MAX_ROCKET_LIFETIME = 17;
 /**
  * Movement Speed of Players
  */
-export const PLAYER_SPEED = 13;
+export const PLAYER_SPEED = 16;
 
 /**
  * Speed of a Rocket Projectile
@@ -264,18 +264,3 @@ export class Vec2 {
         return new Vec2(randomInt(min, max), randomInt(min, max));
     }
 }
-
-/**
- * Test
- */
-export const TEST_MAP: ILevel = {
-    chunks: [
-        new Vec2(0, 0),
-        new Vec2(1, 0),
-        new Vec2(2, -1),
-        new Vec2(1, -1),
-        new Vec2(0, -1),
-        new Vec2(-1, -1)
-    ],
-    destroyedTiles: []
-};

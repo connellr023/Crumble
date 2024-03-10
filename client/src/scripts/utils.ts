@@ -4,10 +4,10 @@
  * @author Connell Reffo
  */
 
-import Player from "./gameobjects/player";
-import Rocket from "./gameobjects/rocket";
+import Player from "../gameobjects/player";
+import Rocket from "../gameobjects/rocket";
 
-import { Chunk, ChunkEdge } from "./gameobjects/chunk";
+import { Chunk, ChunkEdge } from "../gameobjects/chunk";
 
 /**
  * Represents an RGB Colour Code

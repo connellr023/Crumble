@@ -3,8 +3,8 @@
  * @author Connell Reffo
  */
 
-import { render } from "../game";
-import { randomInt, Vec2, CHUNK_SIZE, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT, CHUNK_EDGE_COLOUR } from "../utils";
+import { render } from "../scripts/game";
+import { randomInt, Vec2, CHUNK_SIZE, TOTAL_CHUNK_SIZE, CHUNK_SIZE_PADDING, CHUNK_EDGE_HEIGHT, CHUNK_EDGE_COLOUR } from "../scripts/utils";
 
 import Camera from "./camera";
 import RenderController from "./controller";

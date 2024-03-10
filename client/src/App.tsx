@@ -2,19 +2,17 @@
  * Crumble Client Main HTML
  * @author Connell Reffo
  */
+import "./App.scss";
+import "./scripts/game";
+import "./scripts/socket";
 
-import "./main.css";
-import "../game";
-import "../socket";
-
-import { connectToLobby, displayContentArea } from "../interface";
-
+import { connectToLobby, displayContentArea } from "./scripts/interface";
 import * as React from "react";
 
 /**
  * Main Crumble Markup Component
  */
-class Main extends React.Component {
+class App extends React.Component {
     render() {
         return (
         <>
@@ -83,4 +81,4 @@ class Main extends React.Component {
     }
 }
 
-export default Main;
+export default App;

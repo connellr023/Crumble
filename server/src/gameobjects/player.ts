@@ -70,7 +70,7 @@ export default class Player {
             if (COLLISIONS[key].source === CollisionSources.CHUNK) {
                 obstructionData = {
                     withinMap: true,
-                    onFront: null
+                    onFront: false
                 };
 
                 this.lastChunkCollider = COLLISIONS[key];
@@ -119,7 +119,7 @@ export default class Player {
         this.dead = true;
 
         // Sync Death with Clients
-        this.game.namespace.emit(GameEvents.PLAYER_DIED, {
+        this.game.namespace!.emit(GameEvents.PLAYER_DIED, {
             socketId: this.socketId,
             fellOffFront: fellOffFront
         });
@@ -147,7 +147,7 @@ export default class Player {
     public disconnect() {
 
         // Tell All Clients a Player has Left
-        this.game.namespace.emit(SocketEvents.PLAYER_LEAVE, this.socketId);
+        this.game.namespace!.emit(SocketEvents.PLAYER_LEAVE, this.socketId);
         this.dead = true;
 
         // Check if there Should be Winner
@@ -194,7 +194,7 @@ export default class Player {
                     break;
                 default:
                     knockbackVector.y = 0;
-                    vertKnockbackDir = null;
+                    vertKnockbackDir = Directions.UP;
                     break;
             }
 
@@ -214,7 +214,7 @@ export default class Player {
             }, SHOOT_COOLDOWN_MS);
 
             // Initialize Rocket With Connected Clients
-            this.game.namespace.emit(GameEvents.ROCKET_SHOT, {
+            this.game.namespace!.emit(GameEvents.ROCKET_SHOT, {
                 ownerSocketId: this.socketId,
                 direction: DIRECTION,
                 pos: this.game.rockets[INSTANCE_ID].pos,
@@ -290,7 +290,7 @@ export default class Player {
             this.collider.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_HITBOX.vertOffset);
 
             // Sync Position with Clients
-            this.game.namespace.emit(GameEvents.PLAYER_MOVE, {
+            this.game.namespace!.emit(GameEvents.PLAYER_MOVE, {
                 socketId: this.socketId,
                 pos: this.pos
             });
@@ -341,7 +341,7 @@ export default class Player {
         this.collider.pos = new Vec2(this.pos.x, this.pos.y - PLAYER_HITBOX.vertOffset);
 
         // Sync Position with Clients
-        this.game.namespace.emit(GameEvents.PLAYER_MOVE, {
+        this.game.namespace!.emit(GameEvents.PLAYER_MOVE, {
             socketId: this.socketId,
             pos: this.pos
         });

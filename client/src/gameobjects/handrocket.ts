@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { assets } from "../renderer";
-import { render } from "../game";
-import { Vec2, FacingDirections, HandrocketAngles, HANDROCKET_DIMENSIONS } from "../utils";
+import { assets } from "../scripts/renderer";
+import { render } from "../scripts/game";
+import { Vec2, FacingDirections, HandrocketAngles, HANDROCKET_DIMENSIONS } from "../scripts/utils";
 
 import Camera from "./camera";
 import RenderController from "./controller";

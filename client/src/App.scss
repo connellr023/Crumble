@@ -8,7 +8,7 @@
 
 html {
     background-size: 300px;
-    background-image: url("../assets/checker.png");
+    background-image: url("../public/checker.png");
     background-repeat: repeat;
     background-color: #181425;
     bottom: 0;
@@ -34,11 +34,11 @@ input.standard-input {
     margin: auto;
     padding: 6px;
     transition: 0.2s;
-}
 
-input.standard-input:focus {
-    background-color: #3a4466;
-    transition: 0.2s;
+    &:focus {
+        background-color: #3a4466;
+        transition: 0.2s;
+    }
 }
 
 button.standard-btn {
@@ -52,11 +52,11 @@ button.standard-btn {
     transition: 0.2s;
     padding-bottom: 4px;
     padding-top: 4px;
-}
 
-button.standard-btn:hover {
+&:hover {
     background-color: #3a4466;
     transition: 0.2s;
+}
 }
 
 img.tut-img {
@@ -77,6 +77,12 @@ div.hlink {
     text-align: center;
     transition: 0.3s;
     width: 100%;
+
+    &:hover {
+        color: #8b9bb4;
+        cursor: pointer;
+        transition: 0.3s;
+    }
 }
 
 div.key-icon {
@@ -96,12 +102,6 @@ div.info-txt {
     font-size: 26px;
     letter-spacing: 0.25px;
     max-width: 450px;
-}
-
-div.hlink:hover {
-    color: #8b9bb4;
-    cursor: pointer;
-    transition: 0.3s;
 }
 
 div.content-wrapper-container {
@@ -125,6 +125,7 @@ div.content-wrapper {
 }
 
 div.title-txt {
+    user-select: none;
     color: white;
     font-family: "Crumble";
     font-size: 60px;
@@ -172,14 +173,14 @@ button#leave-game {
     -moz-user-select: none;
     -webkit-user-select: none;
     z-index: 1;
-}
 
-button#leave-game:hover {
-    border-color: #a22633;
-    cursor: pointer;
-    color: #a22633;
-    position: absolute;
-    transition: 0.4s;
+    &:hover {
+        border-color: #a22633;
+        cursor: pointer;
+        color: #a22633;
+        position: absolute;
+        transition: 0.4s;
+    }
 }
 
 button#exit-win-screen-btn {
@@ -196,12 +197,12 @@ button#exit-win-screen-btn {
     transition: 0.4s;
     padding-bottom: 4px;
     padding-top: 4px;
-}
 
-button#exit-win-screen-btn:hover {
-    color: rgb(182, 100, 0);
-    border-color: rgb(182, 100, 0);
-    transition: 0.4s;
+    &:hover {
+        color: rgb(182, 100, 0);
+        border-color: rgb(182, 100, 0);
+        transition: 0.4s;
+    }
 }
 
 div#win-screen-container {
@@ -253,5 +254,5 @@ input#name-input {
 
 @font-face {
     font-family: "Crumble";
-    src: url("../assets/crumble.ttf");
+    src: url("../public/crumble.ttf");
 }

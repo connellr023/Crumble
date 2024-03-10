@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { Vec2, randomInt, TOTAL_CHUNK_SIZE } from "../utils";
-import { connectedPlayers, clientSocketId } from "../socket";
-import { render } from "../game";
+import { Vec2, randomInt, TOTAL_CHUNK_SIZE } from "../scripts/utils";
+import { connectedPlayers, clientSocketId } from "../scripts/socket";
+import { render } from "../scripts/game";
 
 export default abstract class Camera {
     public static pos: Vec2;

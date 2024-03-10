@@ -6,7 +6,7 @@
 import { Vec2 } from "./utils";
 import { game } from "./renderer";
 
-import Camera from "./gameobjects/camera";
+import Camera from "../gameobjects/camera";
 import $ from "jquery";
 import p5 from "p5";
 

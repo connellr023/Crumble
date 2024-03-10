@@ -3,8 +3,8 @@
  * @author Connell Reffo
  */
 
-import { render } from "../game";
-import { randomInt, Vec2, IParticle, TILE_DESTROY_PARTICLE_COLOUR, TILE_SIZE, MUZZLE_BLAST_PARTICLE_COLOUR, ROCKET_SMOKE_TRAIL_COLOUR, ROCKET_PROJECTILE_COLOUR } from "../utils";
+import { render } from "../scripts/game";
+import { randomInt, Vec2, IParticle, TILE_DESTROY_PARTICLE_COLOUR, TILE_SIZE, MUZZLE_BLAST_PARTICLE_COLOUR, ROCKET_SMOKE_TRAIL_COLOUR, ROCKET_PROJECTILE_COLOUR } from "../scripts/utils";
 
 import Camera from "./camera";
 import RenderController from "./controller";

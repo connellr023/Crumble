@@ -3,10 +3,10 @@
  * @author Connell Reffo
  */
 
-import { assets } from "../renderer";
-import { render } from "../game";
-import { Vec2, FacingDirections, PlayerAnimationStates, HandrocketAngles, HANDROCKET_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, PLAYER_DIMENSIONS, PLAYER_SHADOW_OFFSET, PLAYER_NAMETAG_OFFSET, PLAYER_FALL_DIMENSIONS } from "../utils";
-import { clientSocketId } from "../socket";
+import { assets } from "../scripts/renderer";
+import { render } from "../scripts/game";
+import { Vec2, FacingDirections, PlayerAnimationStates, HandrocketAngles, HANDROCKET_DIMENSIONS, NAMETAG_ENEMY_COLOUR, NAMETAG_SELF_COLOUR, TOTAL_CHUNK_SIZE, PLAYER_DIMENSIONS, PLAYER_SHADOW_OFFSET, PLAYER_NAMETAG_OFFSET, PLAYER_FALL_DIMENSIONS } from "../scripts/utils";
+import { clientSocketId } from "../scripts/socket";
 import { Image } from "p5";
 
 import Camera from "./camera";
@@ -87,7 +87,6 @@ export default class Player extends RenderController {
 
         // Set Render Layer
         this.setRenderLayer(5);
-
     }
 
     /**
@@ -294,7 +293,7 @@ export default class Player extends RenderController {
                         this.frame = 1;
                     }
 
-                    if (render.frameCount % 9 === 0) {
+                    if (render.frameCount % 6 === 0) {
                         if (this.frame >= PLAYER_DIMENSIONS.frames - 1) {
                             this.frame = 1;
                             this.handrocketVertOffset = HANDROCKET_DIMENSIONS.vertOffsetNormal;

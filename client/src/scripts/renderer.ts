@@ -5,8 +5,8 @@
 
 import { Vec2, BG_COLOUR, PLAYER_DIMENSIONS, HANDROCKET_DIMENSIONS, GRAPHICS_PATH, PLAYER_FALL_DIMENSIONS } from "./utils";
 
-import Camera from "./gameobjects/camera";
-import RenderController from "./gameobjects/controller";
+import Camera from "../gameobjects/camera";
+import RenderController from "../gameobjects/controller";
 import p5 from "p5";
 
 /**

@@ -3,8 +3,8 @@
  * @author Connell Reffo
  */
 
-import { render } from "../game";
-import { Vec2 } from "../utils";
+import { render } from "../scripts/game";
+import { Vec2 } from "../scripts/utils";
 
 import Camera from "./camera";
 import RenderController from "./controller";

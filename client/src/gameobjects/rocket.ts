@@ -3,8 +3,8 @@
  * @author Connell Reffo
  */
 
-import { render } from "../game";
-import { Vec2, CLIENT_ROCKET_SPEED, ROCKET_PROJECTILE_COLOUR } from "../utils";
+import { render } from "../scripts/game";
+import { Vec2, CLIENT_ROCKET_SPEED, ROCKET_PROJECTILE_COLOUR } from "../scripts/utils";
 
 import { SmokeTrailParticles, ExplodeParticles } from "./particles";
 

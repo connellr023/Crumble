@@ -3,9 +3,9 @@
  * @author Connell Reffo
  */
 
-import { Vec2, RGBColourCode, TILE_NORMAL_COLOUR, TILE_WEAK_COLOUR, TILE_SIZE, CHUNK_SIZE_PADDING } from "../utils";
+import { Vec2, RGBColourCode, TILE_NORMAL_COLOUR, TILE_WEAK_COLOUR, TILE_SIZE, CHUNK_SIZE_PADDING } from "../scripts/utils";
 import { TileDestroyParticles } from "./particles";
-import { render } from "../game";
+import { render } from "../scripts/game";
 
 import Camera from "./camera";
 import RenderController from "./controller";

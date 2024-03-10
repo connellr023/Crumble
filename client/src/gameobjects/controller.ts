@@ -3,7 +3,7 @@
  * @author Connell Reffo
  */
 
-import { MIN_LAYER, MAX_LAYER } from "../utils";
+import { MIN_LAYER, MAX_LAYER } from "../scripts/utils";
 
 /**
  * Outline for Render Control Instances
