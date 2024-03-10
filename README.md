@@ -8,6 +8,10 @@
 
 <br />
 
+This game is currently deployed ![here](https://crumble-b4fq.onrender.com/).
+
+<br />
+
 ### How To Play
 The goal of Crumble is to be the final player standing. Parts of the level around you will crumble periodically indicated by a flashing red square.
 
