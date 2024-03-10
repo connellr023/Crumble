@@ -29,7 +29,10 @@ export const SERVER = APP.listen(PORT, () => {
 /**
  * Manages Socket Server Input/Output
  */
-export const IO = socketIo.listen(SERVER, { httpCompression: false, transports: ["websocket"], allowUpgrades: false });
+export const IO = socketIo.listen(SERVER, {
+    httpCompression: false, transports: ["websocket"],
+    allowUpgrades: false
+});
 
 /**
  * Finds an Availabl Lobby or Creates One and Returns the Lobby ID

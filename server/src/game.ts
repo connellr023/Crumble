@@ -4,7 +4,7 @@
  */
 
 import { IO } from "./index";
-import { Vec2, ILevel, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, TEST_MAP, CHUNK_HITBOX_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, MAX_ROCKET_LIFETIME, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
+import { Vec2, ILevel, IProjectile, IActiveGame, randomInt, GameEvents, SocketEvents, Directions, CHUNK_HITBOX_SIZE, TICK_MS, DESTROY_TILE_TICKS, TILE_DESTROY_WARNING_MS, CHUNK_SIZE, IConnectedPlayer, IAngleChangeData, MAX_NAME_LENGTH, ROCKET_UPDATE_TICKS, TILE_SIZE, TILE_HITBOX, PLAYER_HITBOX, CHUNK_HEIGHT_OFFSET, CHUNK_WIDTH_OFFSET } from "./utils";
 
 import Collider, { CollisionSources } from "./collision";
 import Player from "./gameobjects/player";
@@ -29,17 +29,20 @@ export default class Game {
     public rockets: IProjectile = {};
     public colliders: Array<Collider> = [];
 
-    public namespace: socketIo.Namespace;
+    public namespace: socketIo.Namespace | null;
 
     public loadedMap: ILevel;
 
     public availableTiles: Array<Vec2> = [];
     public destroyedTiles: Array<Vec2> = []; 
     
-    private ticker: NodeJS.Timeout;
+    private ticker: NodeJS.Timeout | null;
     private ticks: number = 0;
 
-    constructor() {
+    constructor()
+    {
+        this.namespace = null;
+        this.ticker = null;
 
         // Load Map
         this.loadedMap = LevelManager.randomLevel();
@@ -130,10 +133,10 @@ export default class Game {
     public closeLobby() {
 
         // Stop Game Ticker
-        clearInterval(this.ticker);
+        clearInterval(this.ticker!);
 
         // Delete Current Game
-        delete IO.nsps[this.namespace.name];
+        delete IO.nsps[this.namespace!.name];
         delete Game.activeGames[this.lobbyId];
 
         console.log(`[x] Closed Lobby "${this.lobbyId}"`);
@@ -155,7 +158,7 @@ export default class Game {
         this.loadedMap.destroyedTiles.push(tilePos);
 
         // Tell Clients Tile is Destroyed
-        this.namespace.emit(GameEvents.TILE_DESTROYED, {
+        this.namespace!.emit(GameEvents.TILE_DESTROYED, {
             pos: tilePos,
             instant: instant
         });
@@ -192,7 +195,7 @@ export default class Game {
 
         if (ALIVE_PLAYERS.length < 2) {
             if (ALIVE_PLAYERS.length === 1) {
-                this.namespace.emit(GameEvents.PLAYER_WON, ALIVE_PLAYERS[0]);
+                this.namespace!.emit(GameEvents.PLAYER_WON, ALIVE_PLAYERS[0]);
             }
 
             this.closeLobby();
@@ -215,7 +218,7 @@ export default class Game {
     private start() {
         
         // Setup Namespace
-        this.namespace.on(SocketEvents.CONNECTION, (socket) => {
+        this.namespace!.on(SocketEvents.CONNECTION, (socket) => {
 
             // Socket Player Register Event
             socket.on(SocketEvents.REGISTER, (name: string) => {
@@ -225,7 +228,7 @@ export default class Game {
 
                 // Add Player
                 this.addPlayer(name, socket.id);
-                console.log(`[+] Added Player "${name}" to "${this.namespace.name}"`);
+                console.log(`[+] Added Player "${name}" to "${this.namespace!.name}"`);
 
                 // Send Socket ID to the Client
                 socket.emit(SocketEvents.SEND_ID, socket.id);
@@ -237,7 +240,7 @@ export default class Game {
                     this.initPlayerSpawns();
                     this.registerChunkTiles();
 
-                    let playersObject = {};
+                    let playersObject: Record<string, {}> = {};
 
                     // Parse Player Data into an Object
                     for (let socketId in this.players) {
@@ -254,7 +257,7 @@ export default class Game {
                     }
 
                     // Send Player Data to Clients
-                    this.namespace.emit(SocketEvents.START_GAME, {
+                    this.namespace!.emit(SocketEvents.START_GAME, {
                         start: true,
                         level: this.loadedMap,
                         players: playersObject
@@ -266,7 +269,7 @@ export default class Game {
                 else {
 
                     // Send Game Ready State to Clients
-                    this.namespace.emit(SocketEvents.START_GAME, {
+                    this.namespace!.emit(SocketEvents.START_GAME, {
                         start: false
                     });
                 }
@@ -289,7 +292,7 @@ export default class Game {
                 this.players[socket.id].handrocketAngle = res.angle;
                 this.players[socket.id].direction = res.direction;
 
-                this.namespace.emit(GameEvents.ANGLE_CHANGE, {
+                this.namespace!.emit(GameEvents.ANGLE_CHANGE, {
                     socketId: socket.id,
                     angle: res.angle,
                     direction: res.direction

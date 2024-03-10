@@ -1,5 +1,5 @@
 {
-  "name": "crumble-client",
+  "name": "client",
   "version": "0.1.0",
   "private": true,
   "proxy": "http://localhost:8000",
@@ -18,7 +18,7 @@
     "p5": "^1.1.9",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1",
+    "react-scripts": "^5.0.1",
     "socket.io-client": "^2.3.0",
     "typescript": "^3.7.5"
   },

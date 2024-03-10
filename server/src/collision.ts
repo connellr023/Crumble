@@ -2,11 +2,8 @@
  * Crumble Server Collision Handling
  * @author Connell Reffo
  */
-
 import { Vec2 } from "./utils";
-
 import Game from "./game";
-import Player from "./gameobjects/player";
 
 /**
  * Represents Possible Collision Sources
@@ -60,8 +57,6 @@ export default class Collider {
     public width: number;
     public height: number;
     public source: CollisionSources;
-
-    public parentObject: Player;
 
     private lobbyId: string;
 
