@@ -8,7 +8,8 @@
 
 <br />
 
-This game is currently deployed ![here](https://crumble-b4fq.onrender.com/).
+### Deployment
+This web app is deployed on *Render* <a href="https://crumble-b4fq.onrender.com/" target="_blank">here</a>.
 
 <br />
 
